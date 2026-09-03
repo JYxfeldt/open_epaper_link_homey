@@ -72,8 +72,8 @@
           "nl": "Er is op een knop van de tag gedrukt"
         },
         "titleFormatted": {
-          "en": "A button on [[Id]] was pressed",
-          "nl": "Er is op een knop van [[Id]] gedrukt"
+          "en": "A button on the tag was pressed",
+          "nl": "Er is op een knop van de tag gedrukt"
         },
         "hint": {
           "en": "Only tags whose type lists the 'button' option have buttons. Pressing one wakes the tag, so it checks in straight away and reports which button it was; this is the one path that is not delayed by the tag's sleep schedule.",
@@ -94,7 +94,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "capabilities=oepl_button",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "The tag with the button",
               "nl": "De tag met de knop"
@@ -158,7 +158,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Your device",
               "nl": "Jouw apparaat"
@@ -229,8 +229,8 @@
           "nl": "Laat de LED knipperen"
         },
         "titleFormatted": {
-          "en": "Flash the LED on [[Id]] [[Colour]], [[Flashes]] time(s) every [[Interval]] seconds for [[Minutes]] minutes",
-          "nl": "Laat de LED op [[Id]] [[Colour]] knipperen, [[Flashes]] keer per [[Interval]] seconden gedurende [[Minutes]] minuten"
+          "en": "Flash the LED [[Colour]], [[Flashes]] time(s) every [[Interval]] seconds for [[Minutes]] minutes",
+          "nl": "Laat de LED [[Colour]] knipperen, [[Flashes]] keer per [[Interval]] seconden gedurende [[Minutes]] minuten"
         },
         "hint": {
           "en": "Only tags whose type lists the 'led' option have one; on the others this card does nothing. The tag receives the command at its next check-in, which can take as long as the AP's maximum sleep time, so treat this as a calm indicator rather than an instant alert. Set the duration to 0 to switch the LED off.",
@@ -240,7 +240,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "capabilities=oepl_led",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "The tag whose LED should flash",
               "nl": "De tag waarvan de LED moet knipperen"
@@ -361,7 +361,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|newton-m3-29|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|newton-m3-29|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "0000000000000000",
               "nl": "0000000000000000"
@@ -395,7 +395,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Select the e-tag",
               "nl": "Selecteer de e-tag"
@@ -443,7 +443,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Select the e-tag",
               "nl": "Selecteer de e-tag"
@@ -491,7 +491,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Select the e-tag",
               "nl": "Selecteer de e-tag"
@@ -517,7 +517,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "0000000000000000",
               "nl": "0000000000000000"
@@ -575,7 +575,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "The tag to show the feed on",
               "nl": "De tag waarop de feed getoond moet worden"
@@ -620,7 +620,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Your device",
               "nl": "Je apparaat"
@@ -654,7 +654,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "The tag to show the feed on",
               "nl": "Het tag om de feed op te tonen"
@@ -696,7 +696,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Your device",
               "nl": "Je apparaat"
@@ -730,7 +730,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "The tag to show the feed on",
               "nl": "De tag waarop de feed getoond moet worden"
@@ -783,7 +783,7 @@
           {
             "type": "device",
             "name": "Id",
-            "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
+            "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag|tlsr-bwr-4-2-63",
             "placeholder": {
               "en": "Select Your Device",
               "nl": "Selecteer uw apparaat"
@@ -1681,6 +1681,63 @@
           "hint": {
             "en": "Downloads and decodes the tag's framebuffer so its picture shows on the device tile. Decoding costs seconds of CPU per update; turn this off if you do not need the preview.",
             "nl": "Haalt de framebuffer van de tag op en decodeert die, zodat de afbeelding op de tegel verschijnt. Decoderen kost seconden CPU per update; zet dit uit als je de preview niet nodig hebt."
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "TLSR BWR 4.2\"",
+        "nl": "TLSR BWR 4.2\""
+      },
+      "deprecated": true,
+      "class": "other",
+      "capabilities": [
+        "alarm_battery",
+        "measure_temperature",
+        "measure_voltage"
+      ],
+      "platforms": [
+        "local"
+      ],
+      "energy": {
+        "batteries": [
+          "CR2450",
+          "CR2450"
+        ]
+      },
+      "connectivity": [
+        "lan"
+      ],
+      "images": {
+        "small": "/drivers/tlsr-bwr-4-2-63/assets/images/small.png",
+        "large": "/drivers/tlsr-bwr-4-2-63/assets/images/large.png",
+        "xlarge": "/drivers/tlsr-bwr-4-2-63/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "id": "tlsr-bwr-4-2-63",
+      "settings": [
+        {
+          "id": "MACAddress",
+          "type": "label",
+          "label": {
+            "en": "MAC address"
+          },
+          "value": "0000000000000000",
+          "hint": {
+            "en": "The MAC address of the device."
           }
         }
       ]
