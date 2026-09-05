@@ -44,6 +44,29 @@ screen:
 All seven cold appliances fit in the packed form, so the last case is only a
 safety net.
 
+### Display 14's heading is the date
+
+Screen 14 replaced the fixed "Status för Vibble" with the day, in Swedish, with
+the weekday capitalised - "Lördag 5 september". Only screen 14; the other three
+keep their own headings, and the timestamp at the foot of 14 is untouched.
+
+Two things had to be got right, and both are measured rather than assumed (see
+"Font geometry" below):
+
+- **Centring.** A fixed `TITLE_X` cannot work when the text changes daily, so it
+  is computed from a table of bahnschrift30 advance widths taken from the AP's
+  own font file. Across all 2604 combinations of weekday, month and day the
+  widest is "Torsdag 24 september" at 299 px, leaving 51 px each side on the
+  400 px panel, and every character used is present in the font.
+- **Vertical room.** The heading moved from `y=4` to `y=7`. `å` reaches 4 px
+  above the draw point, so at `y=4` the ring in "Måndag" would have landed on
+  row 0 - one day in seven, and not the day this was built.
+
+`toLocaleDateString('sv-SE', ...)` was checked on the Homey itself rather than
+trusted: the runtime has full ICU, resolves `sv-SE`, and honours the timezone
+across midnight. Only the first letter is raised, so every diacritic stays
+lowercase.
+
 ### Refuse collection
 
 The trash app's own Flow card only answers today, tomorrow and the day after,
@@ -164,6 +187,49 @@ while a newer template waits, and a small numeric change may never be drawn at
 all. That is an accepted trade for battery life, but any verification has to read
 the framebuffer rather than the template, and has to refuse to report on an
 unchanged one.
+
+## Font geometry, measured rather than estimated
+
+Text placement used to be guessed from an average characters-per-pixel figure.
+It no longer has to be: the AP serves its own font files, so the exact metrics
+are readable.
+
+Fetch them with `/edit?download=/fonts/bahnschrift30.vlw`. A plain GET on the
+path returns **404 with a zero-length body**, which is the same trap that made
+`/log.txt` look empty - the file is there, the direct path just is not served.
+
+A `.vlw` is six big-endian int32 of header (glyph count, version, size, mbox
+height, ascent, descent) then seven int32 per glyph: codepoint, height, width,
+advance, topExtent, leftExtent, padding.
+
+For **bahnschrift30**: ascent 21, descent 6. The renderer puts the baseline at
+`y + ascent`, so a glyph's ink runs
+
+    inkTop    = y + 21 - topExtent
+    inkBottom = inkTop + height - 1
+
+Two consequences that are easy to get wrong:
+
+- **`y` is not the top of the ink.** Any glyph with a `topExtent` above 21
+  reaches *above* `y`. `å` (topExtent 25) starts 4 px above it, `Ö` (26) starts
+  5 px above. A heading at `y=4` therefore puts the ring of "Måndag" on row 0.
+- **The font has no space glyph at all.** U+0020 is absent, and the renderer
+  substitutes an advance of **7 px**. Solved by measuring the old
+  "Status för Vibble" heading on the panel and subtracting the summed advances;
+  the same measurement predicted the left side bearing to the pixel.
+
+### Correction: bahnschrift30 does have Å, Ä and Ö
+
+An earlier note here claimed capital Ö rendered as a bare O, and Display 07's
+heading was written mixed-case as "Dörrar" to work around it. **That was wrong.**
+The font carries Ö at 15x26 against O's 15x21, and on the glyph probe the Ö in
+"DÖRRAR" began exactly 5 px above the D in the same string - dots present,
+model confirmed on every one of the six glyphs.
+
+What actually happened is the mechanism above: the dots sit 5 px above the draw
+point, so in the probe they overlapped the label line drawn just above and my
+crop cut them off. I read a clipped image as a missing glyph. Display 07 could
+use full caps; it is left mixed-case only because nobody asked for it to change.
 
 ## Display 07 - the door board
 

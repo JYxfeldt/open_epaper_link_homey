@@ -380,15 +380,47 @@ if (SCREEN === '10') {
   // the 400 x 300 summary board, unchanged
   const LL = 10, LV = 100, DIV = 178, RL = 188, RV = 252;
   const DEV_NAME = RL, DEV_TEMP = 300, DEV_Y0 = 174, DEV_STEP = 20, DEV_MAX = 3;
-  const TITLE = 'Status för Vibble', TITLE_X = 88;
+  // The heading is the date, so its width changes daily and the centring cannot
+  // stay a hard-coded 88. These are bahnschrift30's own advance widths, read out
+  // of the AP's /fonts/bahnschrift30.vlw (fetch it with /edit?download=, a plain
+  // GET on the path 404s). The font carries no U+0020 glyph at all; 7 px is what
+  // the renderer actually steps for a space, solved by measuring the old heading
+  // on the panel. The table covers every character the date can produce - all 7
+  // weekdays, all 12 months, days 1-31 - and all 2604 combinations were checked
+  // against the font, so nothing falls through to the default.
+  const W30 = {
+    ' ': 7, 'i': 8, 'j': 8, 'l': 9, '1': 10, 'f': 10, 't': 10, 'r': 13, 'T': 14,
+    '6': 15, '7': 15, '9': 15, 'c': 15, 'v': 15,
+    '2': 16, '3': 16, '5': 16, 'a': 16, 'b': 16, 'd': 16, 'e': 16, 'g': 16,
+    'k': 16, 'o': 16, 'p': 16, 's': 16, 'å': 16, 'ö': 16,
+    '0': 17, '4': 17, '8': 17, 'F': 17, 'L': 17, 'n': 17, 'u': 17,
+    'S': 18, 'O': 19, 'M': 23, 'm': 26,
+  };
+  const w30 = s => [...s].reduce((w, ch) => w + (W30[ch] === undefined ? 16 : W30[ch]), 0);
+  // sv-SE gives "lördag 5 september"; only the weekday's first letter is raised.
+  // That keeps every diacritic lowercase, which matters: bahnschrift30 renders
+  // å ä ö correctly, and no Swedish weekday or month name starts with one.
+  const dateStr = new Date().toLocaleDateString('sv-SE', {
+    timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long',
+  });
+  const TITLE = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+  const TITLE_X = Math.max(0, Math.round((400 - w30(TITLE)) / 2));
   const LINE_TOP = 38, LINE_BOT = 232;
   const { hi, lo } = await outdoorRange();
   const outdoor = (hi === null || lo === null) ? '-' : `${sv(hi)}/${sv(lo)}`;
   const dev = coldDeviations();
   const g = await generalRows();
 
+  // y=7, not the old 4. bahnschrift30 puts the baseline at y+21 and draws each
+  // glyph up from there by its own topExtent, so anything taller than a capital
+  // reaches ABOVE y: 'å' has topExtent 25, i.e. its ring starts at y-4. At y=4
+  // that ring lands on row 0, hard against the panel edge - every Monday, and
+  // only on Mondays. Measured, not assumed: on the glyph probe 'Ö' (topExtent
+  // 26) began exactly 5 px above 'D' in the same string, matching this model.
+  // y=7 puts the worst case ('å' ring) at row 3 and the deepest descender
+  // ('g', 'j') at row 33, five clear of the rule at 38.
   t = [
-    { text: [TITLE_X, 4, TITLE, BIG, BLACK] },
+    { text: [TITLE_X, 7, TITLE, BIG, BLACK] },
     { line: [5, LINE_TOP, 395, LINE_TOP, BLACK] },
     { text: [LL, 52, 'TEMPERATURER', F, BLACK] },
     { text: [RL, 52, 'VITVAROR', F, BLACK] },
