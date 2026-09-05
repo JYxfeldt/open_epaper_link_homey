@@ -488,10 +488,17 @@ chosen by rendering five candidates on the real panel and measuring the ink:
 - three columns with a **key figure** large, the name above it and the state
   below, fits everything with room to spare
 
-So each robot shows one number that carries at a distance: battery percent for
-Hubert, kWh for the charger, and when he last ran for Olof - in words, "idag" and
-"igår", with a date before that. Olof has no battery capability at all, which is
-why he gets a date rather than a percentage.
+That last one shipped first and was wrong. The columns existed to solve a width
+problem, and they solved it by shrinking the state name - but the state is the
+one thing worth reading. As Jonas put it, if the key figures are not the
+interesting part then we had solved the wrong problem.
+
+So the board is now **three full-width rows**, one per machine: the name small on
+the left, the state large beside it, and a detail line small underneath. The
+state gets 269 px, which holds "Parkerad i basen" comfortably. The detail line
+carries what the key figure used to: when Olof last ran, in words ("idag",
+"igår", a date before that) since he exposes no battery capability at all, when
+Hubert next starts, and the charger's energy.
 
 The charger deliberately shows `meter_power.lastCharge` in kWh rather than
 `measure_power` in kW. The board updates rarely, so an instantaneous power reading
@@ -499,6 +506,70 @@ says little, while accumulated energy stays meaningful for hours.
 
 `fit()` truncates every string to the measured column capacity, because an
 overrun is drawn straight through the divider rather than clipped.
+
+### The charger row: read the cable, not the status
+
+The board once showed "Ingen bil" with the car sitting in the charger. Two
+separate faults produced that, and both are worth writing down.
+
+**The mapping was wrong.** The row read `charger_status` alone and mapped
+`Standby` to "Ingen bil". Standby means the charger is *idle*, and it is idle
+both when nothing is plugged in and when a car is connected but waiting -
+finished, or scheduled for later. The status cannot tell those apart. Only
+`evcharger_charging_state` can, with `plugged_out` against the four `plugged_in*`
+variants, so that is now what decides whether a car is there:
+
+| `evcharger_charging_state` | shown |
+|---|---|
+| `plugged_out` | Ingen bil |
+| `plugged_in` | Ansluten (Fulladdad if the status says Completed) |
+| `plugged_in_paused` | Ansluten, väntar (Fulladdad if Completed) |
+| `plugged_in_charging` | Laddar |
+| `plugged_in_discharging` | Urladdar |
+
+`charger_status` still refines the wording and still wins outright for `Offline`
+and `Error`, which describe the charger itself and say nothing trustworthy about
+the cable. Measured with the car plugged in and waiting: `charger_status`
+"Paused", `evcharger_charging_state` "plugged_in_paused". All 48 combinations of
+the two fields were swept before deploying; none now claims "Ingen bil" while a
+cable is in.
+
+`meter_power.lastCharge` is the running total of the *current* session while one
+is open and the previous session's total once it closes, resetting to 0 when a
+car is plugged in. So "senast 0 kWh" would be a lie about a car that has just
+been connected; the row says "inget laddat än" instead.
+
+**The data was also frozen.** The Easee app had stopped delivering four days
+earlier while Homey still reported the device `available: true`, with no warning
+and the app "running". `charger_status` sat on "Standby" and
+`evcharger_charging_state` on "plugged_out" since 1 September, and the board
+faithfully drew what it was given. The giveaway was that
+`meter_power.lastCharge` had changed to 25.16 kWh two days *after* those froze -
+a charge session had completed while the charger never reported charging.
+Restarting the app (`no.easee`) restored it immediately.
+
+### Detecting that the charger data has gone stale
+
+The row now refuses to assert when the integration is not delivering, and says
+"Okänd / laddardata gammal" instead.
+
+Getting this right needed a fact about Homey that is easy to assume wrongly:
+**`lastUpdated` moves only when a capability's value CHANGES**, not on every poll.
+Measured directly - two reads six minutes apart, `charger_status` unchanged and
+its stamp unchanged, while `measure_voltage` moved 230 -> 232 in the same window.
+So the age of a state field proves nothing: an unplugged charger legitimately
+reports `plugged_out` for days.
+
+`measure_voltage` is the usable heartbeat, because mains voltage genuinely
+fluctuates. The threshold is six hours, not one: the reading is an integer and
+could plausibly hold one value for a while, while the failure being guarded
+against lasted four days. Verified against both - fresh data passes, a stamp from
+1 September trips it, five hours passes, seven hours trips, and a missing
+capability does not cry wolf.
+
+The stale state is deliberately **not** red. `red` feeds `robot_fault`, which
+drives the LED, and a quiet cloud integration is not a robot fault worth flashing
+a lamp for.
 
 ### The LED cannot disagree with the screen
 

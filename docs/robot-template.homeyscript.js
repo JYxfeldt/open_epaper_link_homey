@@ -168,27 +168,109 @@ async function olof() {
 // ---- The car charger (Easee) --------------------------------------------
 // kWh rather than kW: the board updates rarely, so an instantaneous power
 // reading says little while accumulated energy stays meaningful for hours.
+//
+// Whether a car is connected comes from evcharger_charging_state, NOT from
+// charger_status. This row used to read charger_status alone and map "Standby"
+// to "Ingen bil", which is wrong: Standby means the charger is idle, and it is
+// idle both when nothing is plugged in and when a car is connected but waiting -
+// finished, or scheduled for later. That is how the board came to say "Ingen
+// bil" with the car sitting in the charger. Only the charging state
+// distinguishes plugged_out from the four plugged_in variants.
+//
+// Measured with the car plugged in and waiting: charger_status "Paused",
+// evcharger_charging_state "plugged_in_paused". So charger_status still refines
+// what kind of connected this is, but it may not decide whether a cable is in.
+const PLUG_STATE = {
+  plugged_out: { status: 'Ingen bil', connected: false },
+  plugged_in: { status: 'Ansluten', connected: true },
+  plugged_in_paused: { status: 'Ansluten, väntar', connected: true },
+  plugged_in_charging: { status: 'Laddar', connected: true, charging: true },
+  plugged_in_discharging: { status: 'Urladdar', connected: true, charging: true },
+};
+// These describe the charger itself and outrank anything about the cable.
+const CHARGER_FAULT = { offline: 'Offline', error: 'FEL', 5: 'FEL', 0: 'Offline' };
+// Fallback only, for the case where evcharger_charging_state is missing. It
+// deliberately does not claim "Ingen bil" for standby, because it cannot know.
 const CHARGER_STATE = {
-  0: 'Offline', 1: 'Ingen bil', 2: 'Pausad', 3: 'Laddar',
-  4: 'Klar', 5: 'FEL', 6: 'Bil ansluten',
-  offline: 'Offline', standby: 'Ingen bil', paused: 'Pausad', charging: 'Laddar',
-  completed: 'Klar', error: 'FEL', car_connected: 'Bil ansluten',
+  0: 'Offline', 1: 'Laddare ledig', 2: 'Pausad', 3: 'Laddar',
+  4: 'Fulladdad', 5: 'FEL', 6: 'Ansluten',
+  offline: 'Offline', standby: 'Laddare ledig', paused: 'Pausad',
+  charging: 'Laddar', completed: 'Fulladdad', error: 'FEL', car_connected: 'Ansluten',
 };
 
+// The Easee app can stop delivering while Homey still reports the device as
+// available, with no warning and the app "running". It did exactly that for four
+// days: charger_status froze on "Standby" and the board confidently drew "Ingen
+// bil" with the car plugged in.
+//
+// Detecting that is not as simple as looking at how old the state fields are.
+// Homey's lastUpdated moves only when a value CHANGES - measured directly, two
+// reads six minutes apart with charger_status unchanged and its stamp unchanged
+// - so a state field sitting still is normal and proves nothing. measure_voltage
+// is the exception: it tracks mains voltage and moved 230 -> 232 within those
+// same six minutes. If it has not moved for hours, nothing is being delivered.
+//
+// Six hours, not one: the reading is an integer, so it could plausibly hold one
+// value for a while, and the failure this guards against lasted four days.
+const CHARGER_STALE_MS = 6 * 3600 * 1000;
+function chargerDataStale() {
+  const o = capObj(CHARGER, 'measure_voltage');
+  if (!o || !o.lastUpdated) return false; // cannot tell; do not cry wolf
+  return Date.now() - new Date(o.lastUpdated).getTime() > CHARGER_STALE_MS;
+}
+
 function charger() {
-  const raw = cap(CHARGER, 'charger_status');
-  const key = String(raw == null ? '' : raw).toLowerCase().replace(/\s+/g, '_');
-  const status = CHARGER_STATE[key] || CHARGER_STATE[raw] || fit(raw || 'Okänd', MAX_BIG);
+  // Say "unknown" rather than assert a four-day-old state as current fact.
+  // Deliberately not red: a quiet integration is not a robot fault, and the LED
+  // reads the same flags.
+  if (chargerDataStale()) {
+    return { name: 'Laddare', status: 'Okänd', det: 'laddardata gammal', red: false };
+  }
+  const rawStatus = cap(CHARGER, 'charger_status');
+  const statusKey = String(rawStatus == null ? '' : rawStatus).toLowerCase().replace(/\s+/g, '_');
+  const rawPlug = cap(CHARGER, 'evcharger_charging_state');
+  const plugKey = String(rawPlug == null ? '' : rawPlug).toLowerCase();
+  const plug = PLUG_STATE[plugKey] || null;
+
+  let status;
+  let connected = false;
+  let charging = false;
+  const fault = CHARGER_FAULT[statusKey] || CHARGER_FAULT[rawStatus] || null;
+
+  if (fault) {
+    // Offline or a fault says nothing trustworthy about the cable, so say that
+    // and nothing more.
+    status = fault;
+  } else if (plug) {
+    connected = plug.connected;
+    charging = plug.charging === true;
+    status = plug.status;
+    // A connected car that is done is worth distinguishing from one still
+    // waiting to start.
+    if (connected && !charging && (statusKey === 'completed' || rawStatus === 4)) status = 'Fulladdad';
+  } else {
+    // No charging state at all - fall back, but do not invent "Ingen bil".
+    status = CHARGER_STATE[statusKey] || CHARGER_STATE[rawStatus] || fit(rawStatus || 'Okänd', MAX_BIG);
+    charging = statusKey === 'charging' || rawStatus === 3;
+  }
+  // evcharger_charging is a separate boolean and can lag; treat it as corroboration.
+  if (cap(CHARGER, 'evcharger_charging') === true) charging = true;
+
+  // meter_power.lastCharge is the running total of the CURRENT session while one
+  // is open, and the previous session's total once it closes. It resets to 0
+  // when a new session starts, so "senast 0 kWh" would be a lie about a car that
+  // has just been plugged in.
   const kwh = cap(CHARGER, 'meter_power.lastCharge');
-  const charging = cap(CHARGER, 'evcharger_charging') === true || status === 'Laddar';
-  const amps = cap(CHARGER, 'target_charger_current');
   // Above 99 kWh the decimal is dropped rather than the unit being truncated.
   const kwhText = kwh === null ? null
     : (kwh >= 100 ? String(Math.round(kwh)) : String(Math.round(kwh * 10) / 10).replace('.', ','));
+  const amps = cap(CHARGER, 'target_charger_current');
 
   let det;
-  if (charging && amps !== null) det = `laddar med ${amps} A`;
-  else if (kwhText !== null) det = `senast ${kwhText} kWh`;
+  if (charging && kwh !== null && kwh > 0) det = `${kwhText} kWh hittills`;
+  else if (charging && amps !== null) det = `laddar med ${amps} A`;
+  else if (kwh !== null && kwh > 0) det = `senast ${kwhText} kWh`;
+  else if (connected) det = 'inget laddat än';
   else det = '';
 
   return { name: 'Laddare', status, det, red: status === 'FEL' || status === 'Offline' };
@@ -219,5 +301,7 @@ cols.forEach((c, i) => {
 const faults = cols.filter((c) => c.red).map((c) => c.name);
 await global.set('robot_fault', faults.join(','));
 
-console.log('robotskärm: ' + cols.map((c) => c.name + '=' + c.hero + '/' + c.status + (c.red ? ' ROD' : '')).join('  '));
+// c.hero was a leftover from the key-figure layout that this board replaced, so
+// the log line used to read "Laddare=undefined/...".
+console.log('robotskärm: ' + cols.map((c) => `${c.name}=${c.status}${c.det ? ` (${c.det})` : ''}${c.red ? ' ROD' : ''}`).join('  '));
 return JSON.stringify(t);
