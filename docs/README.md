@@ -166,6 +166,149 @@ compares the current set of out-of-bounds appliances with the previous set and
 passes only on a real change, the other enforces a minimum gap between
 appliance-driven updates.
 
+## Reading the AP
+
+We have gone looking for this twice and got it wrong both times, so it is written
+down here.
+
+### Files: use the editor endpoint, not the path
+
+A plain GET on a stored file returns **404 with a zero-length body**. That is not
+"the file is empty" and not "the endpoint does not exist" - it reads exactly like
+an empty file if you only look at the body length, which is how `/log.txt` got
+reported as 0 bytes when the directory listing plainly showed 8 KB.
+
+    curl "http://<ap>/log.txt"                      -> 404, 0 bytes
+    curl "http://<ap>/edit?download=/log.txt"       -> 200, the file
+
+`/edit?list=/` walks the filesystem and takes a directory (URL-encode the slash:
+`/edit?list=%2Fcurrent`). Between them these reach everything: `/log.txt`,
+`/logold.txt`, `/fonts/*.vlw`, `/current/*.json`, `/current/*.raw`,
+`/tagtypes/*.json`. Always check the status code, not just the body length.
+
+### `log.txt` is thinner than it sounds
+
+It logs AP lifecycle only, and nothing about tags at all:
+
+- `http getJsonTemplateUrl` - with no MAC, no URL and no result
+- `Reboot. Reason: Panic | Task Watchdog | Software`, and `Nightly reboot`
+- `WiFi connection lost` / `Unable to connect to WiFi` /
+  `Starting configuration AP` / `Attempting to reconnect to WiFi.`
+
+There are no check-ins, no renders, no queue events and no per-tag errors. It
+could not have answered any of the questions we have actually had, except "did
+the AP reboot or lose WiFi". Two further caveats: the level is **not adjustable**
+- `/get_ap_config` exposes no log-level key - and the ordering is not reliable,
+since a reboot line can appear timestamped before entries that precede it.
+
+Rotation is `log.txt` -> `logold.txt` and then discard, at roughly 8-10 KB each,
+so about 400 lines of history in total. That is bound by event count, not by
+time: it happened to span five days here only because the AP was quiet.
+
+### The websocket is the real instrument
+
+`ws://<ap>/ws` is a live feed and carries considerably more than the file does.
+Three kinds of message:
+
+- `logMsg` - the whole render-and-deliver trace, none of which ever reaches
+  `log.txt`:
+
+      Updating ABCD0000000000B3
+      new image: /current/ABCD0000000000B3_218908.pending
+      ABCD0000000000B3 block request /current/..._218908.pending block 0, len 4096 checksum 17486
+      ABCD0000000000B3 reports xfer complete
+
+  plus the AP's own content generators (`get weather`, `get dayahead prices`).
+- `tags` - the **complete tag record** on every check-in: `pending`, `LQI`,
+  `RSSI`, `batteryMv`, `temperature`, `wakeupReason`, `nextcheckin`,
+  `updatecount`, `updatelast`, `hash`.
+- `upload` - `{"src":"<MAC>","current":1,"total":2}`, block-by-block transfer
+  progress.
+- `sys` - every few seconds: `heap`, `uptime`, `recordcount`, `dbsize`,
+  `littlefsfree`, `psfree`, `apstate`, `runstate`, WiFi `rssi`/`ssid`/`status`,
+  and periodically `lowbattcount` and `timeoutcount`. A drop in `uptime` is how
+  an AP reboot was caught in the act.
+
+### A `tags` broadcast is not a check-in
+
+This one cost an hour and a wrong conclusion, so it is worth being blunt about. A
+`tags` message is emitted whenever the AP's **record** for a tag changes - which
+includes queueing an image for a tag that is not there - and the radio fields it
+carries are the values stored at the tag's last real contact, not fresh readings.
+
+After an AP reboot, Displays 07 and 08 both appeared in the feed with plausible
+LQI, RSSI, battery and temperature, and `pending` climbing 0 -> 1 -> 2. It looked
+exactly like two long-silent tags coming back to life. They had not: their
+`lastseen` never moved, and every radio field in the broadcast was byte-identical
+to what the database had held since 2026-09-03 and 09-04 respectively.
+
+**Only `lastseen` advancing proves a tag actually spoke.** A live tag also shows
+`lastseen` ahead of `updatelast` once it has taken its image; on a silent tag the
+two are frozen together. When it matters, confirm with the transfer trace - a
+real fetch produces `Updating <MAC>`, then block requests, then
+`<MAC> reports xfer complete`.
+
+`docs/ap-watch.js` is a dependency-free client for all of this:
+
+    node docs/ap-watch.js           follow the websocket until Ctrl-C
+    node docs/ap-watch.js 120       follow for 120 s, then summarise
+    node docs/ap-watch.js --tags    tag database, flagging anything gone quiet
+    node docs/ap-watch.js --logs    download log.txt and logold.txt
+
+Set `OEPL_AP` to point it at a different access point.
+
+One more trap it works around: `/get_db?pos=` takes a **page index, not a record
+offset**. Stepping it by 20 silently returns overlapping pages and drops half the
+database - which briefly hid Display 11 from a listing that looked complete.
+
+This is the tool we should have been using all along. It answers, directly and
+live, most of what we have previously inferred by polling and guessing: whether a
+tag checked in and exactly when, whether an image was queued and under what
+filename, why a tag woke (`wakeupReason` 4 = right button, 5 = left - we built a
+whole Homey test flow to learn this, and the websocket reports it in about a
+second), and whether the AP itself is healthy.
+
+## Stale panels: three tags have stopped talking
+
+Displays 07, 08 and 11 - all M3 2.9" (`hwType` 51) - have gone silent, while
+every other tag checks in within minutes. None of it is a render failure, a
+template problem or anything in the Flow. For each of them `lastseen` and
+`updatelast` are the same timestamp: the last time the tag spoke it took its
+image, and then nothing.
+
+| Tag | LQI at last contact | Silent for | Queue |
+|---|---|---|---|
+| Display 10 | 128 | checking in normally | |
+| Display 09 | 116 | checking in normally | |
+| Display 11 | 108 | 76.7 h | `pending` 0 |
+| Display 08 | 88 | 13.2 h | `pending` 2 waiting |
+| Display 07 | 80 | 38.9 h | `pending` 2 waiting |
+
+Battery is not it - 2961 to 3060 mV at last contact - and the radio channel is
+not it either, `ch` being 11 for the silent and the healthy alike. The split
+falls neatly on signal strength, everything at LQI 116 and above healthy and
+everything at 108 and below silent, but that is a line drawn through five points
+and the order in which the three dropped out does not follow LQI. Treat it as a
+hint about where to look, not a cause.
+
+**There is no remote fix.** The protocol is tag-initiated: the AP never calls a
+tag, it only answers one that wakes and polls, and `/tag_cmd` merely queues a
+command for delivery at a check-in that is not happening. A stranded tag has to
+be woken at the panel - a button press forces an immediate check-in - or have its
+battery reseated. Two of the three already have an image queued and will take it
+the moment they speak.
+
+Worth recording separately, because it may or may not be related: the AP is not
+healthy. Across the two log files, in five days, **four `Task Watchdog` reboots
+and two `Panic` reboots**, plus two WiFi dropouts on 2026-09-02 where it fell
+back to its configuration AP. The 03:56 nightly reboot is deliberate and not part
+of that count. Whether the crashes and the silent tags share a cause is not
+established.
+
+If a panel looks stale again, the order is: `node docs/ap-watch.js --tags` for
+`lastseen`, then `--logs` for reboot reasons, and only then suspect anything in
+this repo.
+
 ## When the AP actually redraws a panel
 
 Uploading a template does not redraw anything, and this is worth knowing before
@@ -176,8 +319,10 @@ trusting a board. Measured over a night and a morning:
   one that differs only in, say, the clock line is dropped silently and `pending`
   stays 0.
 - A queued update is rendered and delivered at the tag's **next check-in**, not
-  on upload. `maxsleep` is 60 minutes here, so that is the worst-case lag, and
-  between `sleeptime1` 23:00 and `sleeptime2` 05:00 the tags sleep for hours.
+  on upload. `maxsleep` is 30 minutes in the current AP config (it was recorded
+  as 60 here earlier; read `/get_ap_config` rather than trusting this line), so
+  that is the worst-case lag, and between `sleeptime1` 23:00 and `sleeptime2`
+  05:00 the tags sleep for hours.
 - The `.raw` file's mtime, which the AP serves as its ETag, is therefore the only
   honest answer to "what is on the panel". The stored `.json` is what *will* be
   on it, eventually.
