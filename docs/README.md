@@ -482,6 +482,24 @@ untouched: 0 / 0.22 / 262.45 kWh and 0 / 0.43 / 509.91 kr, exactly as before.
 looked at - it is the third device found this week reporting `available: true`
 while silently not working, after the Easee charger and `Frys temperatur`.
 
+**Restarting the app did not wake it.** `Raychem SENZ WIFI` v1.6.0 came back up
+running and not crashed, and 75 hours after the thermostat went quiet its
+`measure_temperature`, `heating` and `alarm_connectivity` still carry their
+2026-09-03 timestamps, unchanged by the restart. The floor has drawn no power for
+69 hours. The setpoint reads 18, which is the original value - the 22 I wrote
+never reached the thermostat and was restored the same afternoon.
+
+The app has **only one device**, so the usual test of whether siblings are also
+silent is not available here. What can be said: the app restarts cleanly, runs,
+and continues to raise the device's own connectivity alarm - which is the app
+reporting that it cannot reach the thermostat, rather than the app being broken.
+Beyond that the cause is not determined from Homey, and this is a cloud-connected
+thermostat, so the break could be at the thermostat's WiFi, the nVent account or
+service, or the unit itself. Worth checking physically rather than guessing.
+
+Unlike the Easee charger, which an app restart fixed immediately, this one does
+not respond to anything reachable from here.
+
 ### Källartrappa inne lampa: migrated, and a card field I had been missing
 
 The one device with no meter risk at all. The Dimmer G4 driver keeps a plain
