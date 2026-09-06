@@ -500,6 +500,30 @@ service, or the unit itself. Worth checking physically rather than guessing.
 Unlike the Easee charger, which an app restart fixed immediately, this one does
 not respond to anything reachable from here.
 
+**Resolved: a child had switched the thermostat off.** Not the network, not the
+cloud, not the app, not the unit. Within two minutes of it being switched back on
+every frozen field reported again - `measure_temperature` 19.2, `heating` false,
+and `alarm_connectivity` cleared to false, all stamped 1.5 minutes old against 75
+hours of silence. The setpoint reads 18 as restored, and the floor correctly
+draws nothing because the room is 19.2 against a target of 18.
+
+Worth adding to the troubleshooting order, because we worked down from the most
+complex explanation to the simplest and the simplest was right. Before suspecting
+a cloud service, a WiFi link or an app, check whether the thing has power. Three
+devices this week reported `available: true` while doing nothing, and the causes
+turned out to be entirely different each time:
+
+| Device | Looked like | Actually was |
+|---|---|---|
+| Easee charger | frozen integration | frozen integration - an app restart fixed it |
+| `Frys temperatur` | dead sensor | still unresolved; weakest BLE signal of the three |
+| `Badrum golvvärme` | cloud or WiFi fault | switched off at the wall |
+
+The common thread is that `available: true` means Homey has not decided the
+device is missing, and nothing more. On all three, the honest signal was the age
+of the data - and on this one, `alarm_connectivity` was telling the truth the
+whole time.
+
 ### Källartrappa inne lampa: migrated, and a card field I had been missing
 
 The one device with no meter risk at all. The Dimmer G4 driver keeps a plain
