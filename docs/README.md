@@ -69,6 +69,31 @@ The `oepl_led` and `oepl_button` capabilities are what the filters read, and the
 are set correctly per model: Display 01-06 report `oepl_button` but not
 `oepl_led`, Display 12-16 the reverse, and 07-11 have both.
 
+### One thing the conversion got wrong, and how it showed
+
+When `button-pressed` became an app-level card the device moved from being
+implicit in the card id to being an `Id` argument, and the acknowledgement
+trigger in "Status för Vibble" ended up naming **Display 08** - the robot board -
+rather than Display 11, the panel that actually flashes. Pressing the robot
+board's button therefore also silenced the cold-storage alarm.
+
+It was visible because the card kept an `ownerUri` of Display 11 from its
+per-device days while its `Id` argument said Display 08, and `ownerUri` is what
+the flow editor had recorded when the card belonged to a device. **A card whose
+`Id` argument and `ownerUri` disagree is the signature of a half-finished
+conversion** - a sweep of every flow on the Homey found exactly one, this one,
+and none remain.
+
+Fixed by pointing the `Id` at Display 11; nothing else in the flow was touched.
+The two chains are properly separate again:
+
+- Display 11's button -> acknowledge the drawn signature -> redraw Display 11
+- Display 08's button -> the Olof gate, which asks the AP for `wakeupReason` on
+  Display 08's MAC and only proceeds on 4, the right button
+
+The Olof gate was never affected: it lives in a different flow, on a per-device
+trigger that the official app still registers.
+
 ## status-for-vibble.homeyscript.js
 
 The HomeyScript that builds the JSON templates for the "Status för Vibble"
