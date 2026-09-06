@@ -418,6 +418,48 @@ from `809.49` to a three-decimal value like `809.487`, or `kWh denna dag` leavin
 zero. A device with a standing draw - Torktumlare at 1.6 W moves the fourth
 decimal within the hour - would have answered the same question in an afternoon.
 
+### Torktumlare: why the test could not answer either, and what it cost
+
+Torktumlare was migrated next because it draws 1.6 W continuously. It could not
+answer the question either, for a reason neither device would have revealed:
+
+**The old driver reports two decimals, the new one three, and the rounding blocks
+Power by the Hour.** It stores the last meter reading it accepted and ignores a
+reading lower than that, as a guard against a meter running backwards. Where the
+old driver rounded *up*, the new driver's reading is lower than what is stored:
+
+| | PbtH `meter_latest` | new reading | difference |
+|---|---|---|---|
+| Badrum golvvärme | 809.49 | 809.487 | -0.003 blocked |
+| Torktumlare | 420.48 | 420.477 | -0.003 blocked |
+| Tvättmaskin | 361.39 | 361.386 | -0.004 blocked |
+| Entre värmepump | 3060.36 | 3060.359 | -0.001 blocked |
+| **Gillestuga värmepump** | 10245.71 | **10245.761** | **+0.051 accepted** |
+
+Four of the five are blocked by rounding regardless of whether the app can read
+`meter_power.total` at all, which is exactly why this has been so hard to pin
+down. Gillestuga is the exception, and it draws 17 W, so it is the one device
+that can answer the question immediately with nothing written.
+
+**What it cost.** Trying to unblock Torktumlare by re-baselining `meter_latest`
+to the new reading was a mistake. Power by the Hour treated it as a meter reset
+and zeroed its runtime accumulators; rolling back then left the kWh capabilities
+showing the raw meter (420.48) and the year cost at 894 kr instead of 232 kr.
+The persisted settings were never damaged, but restarting the app did not reload
+them - the app keeps its accumulators in memory and writes settings *from* them,
+not the other way round.
+
+The repair: a settings write only fires the app's `onSettings` handler when a
+value actually **changes**, so writing the correct value back was a no-op. Nudging
+each figure off by 0.01 and immediately back forced the handler to run and
+recalculate. Everything is restored to its pre-migration values - 0.96 / 5.77 /
+151.98 kWh and 1.02 / 6.87 / 232.18 kr - and both Torktumlare and Badrum are back
+on the old app with their names, zones, flow card and sources as they were.
+
+The lesson worth keeping: **do not write `meter_latest`.** If a migration needs
+the meter re-baselined, the app has no flow card for it and the settings are not
+the source of truth at runtime.
+
 ## Reading the AP
 
 We have gone looking for this twice and got it wrong both times, so it is written
