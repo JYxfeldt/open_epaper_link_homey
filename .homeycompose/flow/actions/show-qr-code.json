@@ -3,9 +3,9 @@
     "en": "Display QR code",
     "nl": "Toon QR code"
   },
-  "titleFormatted": { 
+  "titleFormatted": {
     "en": "Display QR code with value [[QRContent]] and title [[Title]]",
-    "nl": "Toon QR code met waarde [[QRContent]] en titel [[Title]]" 
+    "nl": "Toon QR code met waarde [[QRContent]] en titel [[Title]]"
   },
   "hint": {
     "en": "Displays a full-screen QR Code",
@@ -15,7 +15,11 @@
     {
       "type": "device",
       "name": "Id",
-      "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",  
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
+      "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
       "placeholder": {
         "en": "The tag to show the feed on",
         "nl": "Het tag om de feed op te tonen"
@@ -24,6 +28,10 @@
     {
       "type": "text",
       "name": "Title",
+      "title": {
+        "en": "Title",
+        "nl": "Titel"
+      },
       "placeholder": {
         "en": "Displayed title",
         "nl": "Getoonde titel"
@@ -32,6 +40,10 @@
     {
       "type": "text",
       "name": "QRContent",
+      "title": {
+        "en": "QR content",
+        "nl": "QR-inhoud"
+      },
       "placeholder": {
         "en": "Any content that can be coded into a QR Code",
         "nl": "Om het even welke inhoud die in een QR code kan worden gecodeerd"

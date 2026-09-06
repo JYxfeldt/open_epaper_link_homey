@@ -3,8 +3,8 @@
     "en": "Display hours counter",
     "nl": "Toon uren teller"
   },
-  "titleFormatted": { 
-    "en": "Display counter starting with [[Counter]] with a treshold on [[Threshold]] hours" ,
+  "titleFormatted": {
+    "en": "Display counter starting with [[Counter]] with a treshold on [[Threshold]] hours",
     "nl": "Toon teller die start met [[Counter]] met een drempel op [[Threshold]] uren"
   },
   "hint": {
@@ -15,15 +15,23 @@
     {
       "type": "device",
       "name": "Id",
-      "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",  
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
+      "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
       "placeholder": {
         "en": "Select the e-tag",
         "nl": "Selecteer de e-tag"
       }
-    }, 
+    },
     {
       "type": "number",
       "name": "Counter",
+      "title": {
+        "en": "Number of hours",
+        "nl": "Aantal uren"
+      },
       "placeholder": {
         "en": "Number of hours",
         "nl": "Aantal uren"
@@ -35,6 +43,10 @@
     {
       "type": "number",
       "name": "Threshold",
+      "title": {
+        "en": "Red below",
+        "nl": "Rood onder"
+      },
       "placeholder": {
         "en": "Threshold to show the number in red",
         "nl": "Drempelwaarde om het getal in rood weer te geven"

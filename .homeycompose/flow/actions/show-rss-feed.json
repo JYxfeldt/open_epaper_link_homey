@@ -3,8 +3,8 @@
     "en": "Display an RSS Feed",
     "nl": "Toon een RSS Feed"
   },
-  "titleFormatted": { 
-    "en": "Display the RSS feed from [[Title]] url [[URL]] and refreshes it every [[Interval]] minutes" ,
+  "titleFormatted": {
+    "en": "Display the RSS feed from [[Title]] url [[URL]] and refreshes it every [[Interval]] minutes",
     "nl": "Toon de RSS feed van [[Title]] url [[URL]] en ververst deze elke [[Interval]] minuten"
   },
   "hint": {
@@ -15,7 +15,11 @@
     {
       "type": "device",
       "name": "Id",
-      "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",  
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
+      "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
       "placeholder": {
         "en": "The tag to show the feed on",
         "nl": "De tag waarop de feed getoond moet worden"
@@ -24,6 +28,10 @@
     {
       "type": "text",
       "name": "Title",
+      "title": {
+        "en": "Title",
+        "nl": "Titel"
+      },
       "placeholder": {
         "en": "Displayed title",
         "nl": "De getoonde titel"
@@ -32,6 +40,10 @@
     {
       "type": "text",
       "name": "URL",
+      "title": {
+        "en": "Feed URL",
+        "nl": "Feed-URL"
+      },
       "placeholder": {
         "en": "Full URL of the RSS feed",
         "nl": "De volledige URL van de RSS feed"
@@ -40,6 +52,10 @@
     {
       "type": "number",
       "name": "Interval",
+      "title": {
+        "en": "Refresh every",
+        "nl": "Ververs elke"
+      },
       "placeholder": {
         "en": "How often (in minutes) the feed is being refreshed",
         "nl": "Hoe vaak (in minuten) de feed ververst moet worden"

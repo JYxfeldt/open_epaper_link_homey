@@ -15,6 +15,10 @@
     {
       "type": "device",
       "name": "Id",
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
       "filter": "capabilities=oepl_led",
       "placeholder": {
         "en": "The tag whose LED should flash",
@@ -29,13 +33,55 @@
         "nl": "Kleur"
       },
       "values": [
-        { "id": "red", "title": { "en": "Red", "nl": "Rood" } },
-        { "id": "green", "title": { "en": "Green", "nl": "Groen" } },
-        { "id": "blue", "title": { "en": "Blue", "nl": "Blauw" } },
-        { "id": "yellow", "title": { "en": "Yellow", "nl": "Geel" } },
-        { "id": "magenta", "title": { "en": "Magenta", "nl": "Magenta" } },
-        { "id": "cyan", "title": { "en": "Cyan", "nl": "Cyaan" } },
-        { "id": "white", "title": { "en": "White", "nl": "Wit" } }
+        {
+          "id": "red",
+          "title": {
+            "en": "Red",
+            "nl": "Rood"
+          }
+        },
+        {
+          "id": "green",
+          "title": {
+            "en": "Green",
+            "nl": "Groen"
+          }
+        },
+        {
+          "id": "blue",
+          "title": {
+            "en": "Blue",
+            "nl": "Blauw"
+          }
+        },
+        {
+          "id": "yellow",
+          "title": {
+            "en": "Yellow",
+            "nl": "Geel"
+          }
+        },
+        {
+          "id": "magenta",
+          "title": {
+            "en": "Magenta",
+            "nl": "Magenta"
+          }
+        },
+        {
+          "id": "cyan",
+          "title": {
+            "en": "Cyan",
+            "nl": "Cyaan"
+          }
+        },
+        {
+          "id": "white",
+          "title": {
+            "en": "White",
+            "nl": "Wit"
+          }
+        }
       ]
     },
     {

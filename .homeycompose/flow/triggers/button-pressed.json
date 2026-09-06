@@ -26,6 +26,10 @@
     {
       "type": "device",
       "name": "Id",
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
       "filter": "capabilities=oepl_button",
       "placeholder": {
         "en": "The tag with the button",

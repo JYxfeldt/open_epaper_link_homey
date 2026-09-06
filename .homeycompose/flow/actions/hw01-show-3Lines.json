@@ -3,10 +3,10 @@
     "en": "Display 3 lines of text",
     "nl": "Geef 3 regels tekst weer"
   },
-  "titleFormatted": { 
+  "titleFormatted": {
     "en": "Display [[Title]], [[Key1]]: [[Value1]], [[Key2]]: [[Value2]], [[Key3]]: [[Value3]] ",
-    "nl": "Geef [[Title]], [[Key1]]: [[Value1]], [[Key2]]: [[Value2]], [[Key3]]: [[Value3]] weer" 
-  },  
+    "nl": "Geef [[Title]], [[Key1]]: [[Value1]], [[Key2]]: [[Value2]], [[Key3]]: [[Value3]] weer"
+  },
   "hint": {
     "en": "This card lets you show you custom text on the e-tag (3 Lines with a Title)",
     "nl": "Deze kaart laat je toe om 3 regels tekst weer te geven op de e-tag (met een titel)"
@@ -15,7 +15,11 @@
     {
       "type": "device",
       "name": "Id",
-      "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",  
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
+      "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
       "placeholder": {
         "en": "Your device",
         "nl": "Jouw apparaat"
@@ -24,14 +28,22 @@
     {
       "type": "text",
       "name": "Title",
+      "title": {
+        "en": "Title",
+        "nl": "Titel"
+      },
       "placeholder": {
         "en": "The title of your card",
         "nl": "De titel van je kaart"
       }
-    },    
+    },
     {
       "type": "text",
       "name": "Key1",
+      "title": {
+        "en": "Label 1",
+        "nl": "Label 1"
+      },
       "placeholder": {
         "en": "For example 'Temperature'",
         "nl": "Bijvoorbeeld 'Temperatuur'"
@@ -40,14 +52,22 @@
     {
       "type": "text",
       "name": "Value1",
+      "title": {
+        "en": "Value 1",
+        "nl": "Waarde 1"
+      },
       "placeholder": {
         "en": "For example 21 degrees",
         "nl": "Bijvoorbeeld 21 graden"
       }
-    },   
+    },
     {
       "type": "text",
       "name": "Key2",
+      "title": {
+        "en": "Label 2",
+        "nl": "Label 2"
+      },
       "placeholder": {
         "en": "For example 'Temperature'",
         "nl": "Bijvoorbeeld 'Temperatuur'"
@@ -56,14 +76,22 @@
     {
       "type": "text",
       "name": "Value2",
+      "title": {
+        "en": "Value 2",
+        "nl": "Waarde 2"
+      },
       "placeholder": {
         "en": "For example 21 degrees",
         "nl": "Bijvoorbeeld 21 graden"
       }
-    }, 
+    },
     {
       "type": "text",
       "name": "Key3",
+      "title": {
+        "en": "Label 3",
+        "nl": "Label 3"
+      },
       "placeholder": {
         "en": "For example 'Temperature'",
         "nl": "Bijvoorbeeld 'Temperatuur'"
@@ -72,10 +100,14 @@
     {
       "type": "text",
       "name": "Value3",
+      "title": {
+        "en": "Value 3",
+        "nl": "Waarde 3"
+      },
       "placeholder": {
         "en": "For example 21 degrees",
         "nl": "Bijvoorbeeld 21 graden"
       }
-    }          
+    }
   ]
 }

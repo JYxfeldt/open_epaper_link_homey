@@ -94,6 +94,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "capabilities=oepl_button",
             "placeholder": {
               "en": "The tag with the button",
@@ -131,6 +135,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "placeholder": {
               "en": "The tag that went quiet",
               "nl": "De tag die stilviel"
@@ -158,6 +166,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Your device",
@@ -167,6 +179,10 @@
           {
             "type": "text",
             "name": "Title",
+            "title": {
+              "en": "Title",
+              "nl": "Titel"
+            },
             "placeholder": {
               "en": "The title of your card",
               "nl": "De titel van je kaart"
@@ -175,6 +191,10 @@
           {
             "type": "text",
             "name": "Key1",
+            "title": {
+              "en": "Label 1",
+              "nl": "Label 1"
+            },
             "placeholder": {
               "en": "For example 'Temperature'",
               "nl": "Bijvoorbeeld 'Temperatuur'"
@@ -183,6 +203,10 @@
           {
             "type": "text",
             "name": "Value1",
+            "title": {
+              "en": "Value 1",
+              "nl": "Waarde 1"
+            },
             "placeholder": {
               "en": "For example 21 degrees",
               "nl": "Bijvoorbeeld 21 graden"
@@ -191,6 +215,10 @@
           {
             "type": "text",
             "name": "Key2",
+            "title": {
+              "en": "Label 2",
+              "nl": "Label 2"
+            },
             "placeholder": {
               "en": "For example 'Temperature'",
               "nl": "Bijvoorbeeld 'Temperatuur'"
@@ -199,6 +227,10 @@
           {
             "type": "text",
             "name": "Value2",
+            "title": {
+              "en": "Value 2",
+              "nl": "Waarde 2"
+            },
             "placeholder": {
               "en": "For example 21 degrees",
               "nl": "Bijvoorbeeld 21 graden"
@@ -207,6 +239,10 @@
           {
             "type": "text",
             "name": "Key3",
+            "title": {
+              "en": "Label 3",
+              "nl": "Label 3"
+            },
             "placeholder": {
               "en": "For example 'Temperature'",
               "nl": "Bijvoorbeeld 'Temperatuur'"
@@ -215,6 +251,10 @@
           {
             "type": "text",
             "name": "Value3",
+            "title": {
+              "en": "Value 3",
+              "nl": "Waarde 3"
+            },
             "placeholder": {
               "en": "For example 21 degrees",
               "nl": "Bijvoorbeeld 21 graden"
@@ -240,6 +280,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "capabilities=oepl_led",
             "placeholder": {
               "en": "The tag whose LED should flash",
@@ -361,6 +405,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|newton-m3-29|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "0000000000000000",
@@ -370,6 +418,10 @@
           {
             "type": "text",
             "name": "Location",
+            "title": {
+              "en": "City",
+              "nl": "Plaats"
+            },
             "placeholder": {
               "en": "Show the current prediction in this city",
               "nl": "Toon het huidige prediction in deze stad"
@@ -395,6 +447,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Select the e-tag",
@@ -404,6 +460,10 @@
           {
             "type": "number",
             "name": "Counter",
+            "title": {
+              "en": "Number of days",
+              "nl": "Aantal dagen"
+            },
             "placeholder": {
               "en": "Number of days",
               "nl": "Aantal dagen"
@@ -415,6 +475,10 @@
           {
             "type": "number",
             "name": "Threshold",
+            "title": {
+              "en": "Red below",
+              "nl": "Rood onder"
+            },
             "placeholder": {
               "en": "Threshold to show the number in red",
               "nl": "Drempelwaarde om het getal in rood weer te geven"
@@ -443,6 +507,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Select the e-tag",
@@ -452,6 +520,10 @@
           {
             "type": "number",
             "name": "Counter",
+            "title": {
+              "en": "Number of hours",
+              "nl": "Aantal uren"
+            },
             "placeholder": {
               "en": "Number of hours",
               "nl": "Aantal uren"
@@ -463,6 +535,10 @@
           {
             "type": "number",
             "name": "Threshold",
+            "title": {
+              "en": "Red below",
+              "nl": "Rood onder"
+            },
             "placeholder": {
               "en": "Threshold to show the number in red",
               "nl": "Drempelwaarde om het getal in rood weer te geven"
@@ -491,6 +567,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Select the e-tag",
@@ -517,6 +597,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "0000000000000000",
@@ -526,6 +610,10 @@
           {
             "type": "text",
             "name": "Location",
+            "title": {
+              "en": "City",
+              "nl": "Plaats"
+            },
             "placeholder": {
               "en": "Show the current weather in this city",
               "nl": "Toon het huidige weer in deze stad"
@@ -534,6 +622,10 @@
           {
             "type": "dropdown",
             "name": "Units",
+            "title": {
+              "en": "Units",
+              "nl": "Eenheden"
+            },
             "placeholder": {
               "en": "Metric / Imperial",
               "nl": "Metrisch / Imperiaal"
@@ -575,6 +667,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "The tag to show the feed on",
@@ -584,6 +680,10 @@
           {
             "type": "text",
             "name": "URL",
+            "title": {
+              "en": "Image URL",
+              "nl": "Afbeeldings-URL"
+            },
             "placeholder": {
               "en": "Full URL of exact right size image",
               "nl": "Volledige URL van exact de juiste grootte afbeelding"
@@ -592,6 +692,10 @@
           {
             "type": "number",
             "name": "Interval",
+            "title": {
+              "en": "Refresh every",
+              "nl": "Ververs elke"
+            },
             "placeholder": {
               "en": "How often (in minutes) the image is being fetched. Minimum is 3 minutes.",
               "nl": "Hoe vaak (in minuten) de afbeelding wordt opgehaald. Minimum is 3 minuten."
@@ -620,6 +724,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Your device",
@@ -629,6 +737,10 @@
           {
             "type": "text",
             "name": "JSON",
+            "title": {
+              "en": "JSON template",
+              "nl": "JSON-sjabloon"
+            },
             "placeholder": {
               "en": "[{ \"text\": [ 5, 5, \"Hello!, Homey\", \"bahnschrift20\", 1, 0, 0 ] }]",
               "nl": "[{ \"text\": [ 5, 5, \"Hallo!, Homey\", \"bahnschrift20\", 1, 0, 0 ] }]"
@@ -654,6 +766,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "The tag to show the feed on",
@@ -663,6 +779,10 @@
           {
             "type": "text",
             "name": "Title",
+            "title": {
+              "en": "Title",
+              "nl": "Titel"
+            },
             "placeholder": {
               "en": "Displayed title",
               "nl": "Getoonde titel"
@@ -671,6 +791,10 @@
           {
             "type": "text",
             "name": "QRContent",
+            "title": {
+              "en": "QR content",
+              "nl": "QR-inhoud"
+            },
             "placeholder": {
               "en": "Any content that can be coded into a QR Code",
               "nl": "Om het even welke inhoud die in een QR code kan worden gecodeerd"
@@ -696,6 +820,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|solum-154|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Your device",
@@ -705,6 +833,10 @@
           {
             "type": "text",
             "name": "RemoteURL",
+            "title": {
+              "en": "Template URL",
+              "nl": "Sjabloon-URL"
+            },
             "placeholder": {
               "en": "Full URL (including http/https) to your template",
               "nl": "Volledige URL (inclusief http/https) naar je template"
@@ -730,6 +862,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "The tag to show the feed on",
@@ -739,6 +875,10 @@
           {
             "type": "text",
             "name": "Title",
+            "title": {
+              "en": "Title",
+              "nl": "Titel"
+            },
             "placeholder": {
               "en": "Displayed title",
               "nl": "De getoonde titel"
@@ -747,6 +887,10 @@
           {
             "type": "text",
             "name": "URL",
+            "title": {
+              "en": "Feed URL",
+              "nl": "Feed-URL"
+            },
             "placeholder": {
               "en": "Full URL of the RSS feed",
               "nl": "De volledige URL van de RSS feed"
@@ -755,6 +899,10 @@
           {
             "type": "number",
             "name": "Interval",
+            "title": {
+              "en": "Refresh every",
+              "nl": "Ververs elke"
+            },
             "placeholder": {
               "en": "How often (in minutes) the feed is being refreshed",
               "nl": "Hoe vaak (in minuten) de feed ververst moet worden"
@@ -783,6 +931,10 @@
           {
             "type": "device",
             "name": "Id",
+            "title": {
+              "en": "Tag",
+              "nl": "Tag"
+            },
             "filter": "driver_id=solum-29|newton-m3-29|solum-42|m2-29-uc8151|m2-74|tag",
             "placeholder": {
               "en": "Select Your Device",
@@ -792,6 +944,10 @@
           {
             "type": "text",
             "name": "Location",
+            "title": {
+              "en": "City",
+              "nl": "Plaats"
+            },
             "placeholder": {
               "en": "Show the current weather in this city",
               "nl": "Toon het huidige weer in deze stad"
@@ -800,6 +956,10 @@
           {
             "type": "dropdown",
             "name": "Units",
+            "title": {
+              "en": "Units",
+              "nl": "Eenheden"
+            },
             "placeholder": {
               "en": "Metric / Imperial",
               "nl": "Metrisch / Imperiaal"

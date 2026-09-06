@@ -3,8 +3,8 @@
     "en": "Display rain prediction (Buienradar)",
     "nl": "Buienradar regen voorspelling"
   },
-  "titleFormatted": { 
-    "en": "Display rain prediction in [[Location]] " ,
+  "titleFormatted": {
+    "en": "Display rain prediction in [[Location]] ",
     "nl": "Buienradar regen voorspelling in [[Location]]"
   },
   "hint": {
@@ -15,7 +15,11 @@
     {
       "type": "device",
       "name": "Id",
-      "filter": "driver_id=solum-29|newton-m3-29|m2-29-uc8151|m2-74|tag",  
+      "title": {
+        "en": "Tag",
+        "nl": "Tag"
+      },
+      "filter": "driver_id=solum-29|newton-m3-29|m2-29-uc8151|m2-74|tag",
       "placeholder": {
         "en": "0000000000000000",
         "nl": "0000000000000000"
@@ -24,6 +28,10 @@
     {
       "type": "text",
       "name": "Location",
+      "title": {
+        "en": "City",
+        "nl": "Plaats"
+      },
       "placeholder": {
         "en": "Show the current prediction in this city",
         "nl": "Toon het huidige prediction in deze stad"
