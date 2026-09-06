@@ -504,13 +504,52 @@ believed it belonged to a different device than the one it triggered on. Not
 worth repairing in flows that are disabled and replaced, but it is the mechanism
 behind the bug.
 
-### Where this leaves the question
+### The answer: no
 
-Still unanswered, but only one device can answer it and nothing needs to be
-written to do so: **Gillestuga värmepump**. Its new reading is already 0.051 kWh
-above what Power by the Hour has stored, so there is no rounding block, and it
-draws 17 W so the meter climbs continuously. Migrating it would settle the
-question within minutes.
+Gillestuga settled it. It was the only device with no rounding block and a
+continuous draw, so it could be migrated and watched with **nothing written to
+Power by the Hour beyond the source id**.
+
+Over 22 minutes the source meter climbed from 10246.130 to 10246.147 - 0.017 kWh,
+far past any rounding - and for the last stretch the heat pump was drawing 632 W.
+In that time Power by the Hour booked **nothing**: `meter_latest` stayed at
+"10246.13" and `meter_kwh_this_day` stayed at 2.22, against a normal booking
+cycle of 12 to 14 minutes.
+
+Meanwhile its `measure_watt_avg` tracked the new device exactly, 632.1 W updated
+seconds earlier. So the app was talking to the new device the whole time.
+
+**Power by the Hour reads `measure_power` from the new driver but not
+`meter_power.total`.** With `use_measure_source: false` - which is how all five
+are configured - it therefore records no energy at all.
+
+Rolled back immediately. The moment the old source delivered a reading, PbtH
+caught up: `meter_kwh_this_day` 2.22 -> 2.25 and the year 2939.63 -> 2939.66.
+That is worth knowing on its own: **no consumption is lost while PbtH ignores a
+source**, because the meter is cumulative and the next accepted reading includes
+the whole gap. It also served as the control - the app resumed counting instantly
+with the old device, so nothing was wrong with the app itself.
+
+### What this means for the remaining four
+
+The four PM Mini G3 energy meters - Entre värmepump, Gillestuga värmepump,
+Tvättmaskin, Torktumlare, plus Badrum golvvärme - **cannot be migrated while
+their Power by the Hour devices read the cumulative meter.** Three ways forward,
+none of them free:
+
+- **Switch those PbtH devices to `use_measure_source: true`**, so they integrate
+  the wattage instead of reading the meter. That works with what the new driver
+  exposes, but it changes the accounting method and will drift from the physical
+  meter over time.
+- **Wait for the Shelly app** to expose a plain `meter_power`, or for Power by
+  the Hour to learn the sub-capability. Costs nothing and risks nothing.
+- **Keep them on the old app.** Fine until the old app is retired, which is also
+  when the two BLE cold-storage sensors would go.
+
+The device that has no such constraint has already been migrated: Källartrappa
+inne lampa, whose Dimmer G4 keeps a plain `meter_power` and which has no Power by
+the Hour device at all. Gillestuga Mediautrustning is a Plug S G3 - same
+`meter_power.total` split, and it does have a PbtH device, so it is blocked too.
 
 ## Reading the AP
 
