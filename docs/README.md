@@ -166,6 +166,109 @@ compares the current set of out-of-bounds appliances with the previous set and
 passes only on a real change, the other enforces a minimum gap between
 appliance-driven updates.
 
+## kylfrys-larm.homeyscript.js - the cold storage alarm
+
+Seven near-identical Flows, one per fridge and freezer, replaced by one. They
+were copies of two templates - the same card ids appear in all of them - and
+between them they sent an alarm for **every reported value** over the threshold.
+The Shelly Pill sensors change 70 to 320 times per six hours, and each alarm was
+up to three notifications, which is where the storm came from.
+
+### What the old ones did, and what came across
+
+| | Fridges | Freezers |
+|---|---|---|
+| critical push | > 12 | > -6 |
+| message + speech | > 10 | > -12 |
+| low | < 0 | none |
+
+The alarm paths are unchanged and still shared: `Skicka meddelande` (called by 41
+Flows) and `Spela text i allmäna högtalare` (14 Flows, seven TTS speakers, and
+still only between 08:00 and 19:00). The thresholds carried over as they were,
+and the display boards were changed to match them rather than the other way
+round - see below.
+
+Four bugs were found in the old Flows while reading them. None came across:
+
+- **Three Flows reported the wrong device's temperature.** Halv kyl and Ölkyl
+  both embedded `Kylskåp`'s temperature token in their message text, and Halv
+  frysbox embedded the cellar freezer's. An alarm about the beer fridge showed
+  the kitchen fridge's degrees.
+- **`Kyl - Kök` said "hög" in its low branch** - below 0 degrees reported
+  "Temperatur i kökets kyl hög!".
+- **`Frys - Förråd Stort` had a duplicated speech string**, repeating the whole
+  phrase after the temperature.
+- **The freezers had no low bound at all** while the fridges did.
+
+### The pause
+
+Global, not per device: one alarm at a time however many units are out of
+bounds, and the message names all of them - "Kyl halv 11 grader och Frys stående
+minus 5 grader" rather than two separate alarms, so a unit going warm can never
+be silenced by another that alarmed a moment earlier.
+
+Repeats of the same situation escalate: 1 minute, then 5, 15, 30, and 30 from
+then on. A situation that gets **worse** ignores that entirely and alarms
+immediately - a device newly out of bounds, or one crossing from warning to
+critical. Getting better does not: a unit recovering, or dropping from critical
+back to warning, is not worth waking anyone for, and letting it reset the timer
+would mean a unit oscillating between two levels alarmed forever.
+
+**Hysteresis is what makes the breakthrough safe.** A device enters alarm at the
+threshold and only leaves it a full degree past, so a sensor sitting on the line
+cannot flip in and out and break through the pause on every reading. Without it
+the breakthrough rule would defeat the pause it is supposed to complement. This
+matters here: Frys stående cycles across its threshold on a 45-minute compressor
+rhythm.
+
+State lives in `kylfrys_larm_state` in the global store, with `kylfrys_send` and
+`kylfrys_kritisk` published alongside it. The Flow gates on those two rather than
+on the returned string, because a condition card cannot read another card's
+return value - only the global store is shared between them.
+
+### Thresholds are now the same on the boards
+
+The display used to use its own, tighter numbers - fridge >= 7, freezer > -16 -
+which meant the panel called things deviations that never produced an alarm. It
+now uses the alarm's numbers exactly. Two levels: the warning level is what makes
+a row red and counts towards the deviation total, and the critical level marks
+the name with `!` and sorts it to the top, so that when the list is truncated the
+worst survive. The summary line is left as a plain count deliberately - on
+Display 14 that column is 143 px and "2 avvikelser, 1 kritisk" needs 168 px in
+t0_14b_tf, so the `!` carries the severity in the space that exists.
+
+The LED follows automatically: it reads what the board published, not the
+sensors.
+
+### The freezer low alarm is not built
+
+-25 was proposed. Measurement says it sits **inside normal operation**:
+
+| | below -25 | coldest seen | note |
+|---|---|---|---|
+| Frys halv | 55-64% of the time | -28.8 | runs colder than the rest |
+| Frys stående | 17% of the time, 31 excursions/24h | -26.4 | every compressor cycle |
+| Frys liggande | never | -23.3 | |
+| Frys (källare) | never | -24.4 | sensor frozen, see below |
+
+So `LIMITS.freezer.low` is `null` and the check is skipped. The fridge low alarm
+at 1 degree is in and is safe - the coldest fridge reading in 24 hours was Ölkyl
+at 2.6.
+
+### Two things this surfaced
+
+**`Frys temperatur` has been frozen on -24.4 for 15 days** while reporting
+`available: true`, exactly like the Easee charger. The cellar freezer has had no
+working alarm for two weeks. The script reports a sensor that has not changed in
+12 hours alongside any alarm it sends; setting `ALARM_ON_STALE` to true would
+make a dead sensor raise an alarm on its own, which is off by default because it
+would start nagging immediately.
+
+**Frys stående reached -3.7 degrees for about three minutes** on 6 September,
+well past the critical threshold, in the middle of an otherwise clean 45-minute
+compressor cycle between -26 and -17. Most likely a door left open. Worth knowing
+that it happens.
+
 ## Reading the AP
 
 We have gone looking for this twice and got it wrong both times, so it is written

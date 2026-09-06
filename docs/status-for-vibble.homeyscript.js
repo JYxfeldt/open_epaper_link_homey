@@ -143,8 +143,26 @@ function appliance(id) {
 }
 
 // ---- cold storage -------------------------------------------------------
-// Fridge at or above 7 C is a deviation; freezer warmer than -16 C is a
-// deviation. -16 rather than -18 leaves room for the defrost cycle.
+// These now match the alarm Flow exactly, so the board and the notification can
+// never disagree about what counts as wrong. They used to be tighter - fridge
+// >= 7, freezer > -16 - which meant the panel called things deviations that
+// never produced an alarm.
+//
+// Two levels. The warning level is what makes a row red and counts towards the
+// deviation total; the critical level additionally marks the name with "!" and
+// sorts it to the top, so that when the list is truncated the worst survive.
+// The summary text is deliberately left as a plain count: on Display 14 the
+// summary column is 143 px, and "2 avvikelser, 1 kritisk" needs 168 px in
+// t0_14b_tf. The "!" carries the severity instead, in the space that exists.
+const COLD_LIMITS = {
+  fridge: { warn: 10, crit: 12, low: 1 },
+  // The freezer low alarm is not settled: -25 turned out to sit inside normal
+  // operation (Frys halv runs below it half the time, Frys stående dips to
+  // -26.4 on every compressor cycle), so it is left off until a value is
+  // agreed. null means no low check.
+  freezer: { warn: -12, crit: -6, low: null },
+};
+
 const COLD = [
   ['3753a84f-08e3-4bc3-a425-cfce430f2a8f', 'Kylskåp',       'fridge'],
   ['c0087978-e847-45ba-a6d9-b9f6923ff986', 'Kyl halv',      'fridge'],
@@ -155,14 +173,31 @@ const COLD = [
   ['b8612fd5-1ab1-4704-8b89-d26c1e44162a', 'Frys liggande', 'freezer'],
 ];
 
+function coldLevel(kind, t) {
+  const L = COLD_LIMITS[kind];
+  if (t > L.crit) return 'krit';
+  if (t > L.warn) return 'varn';
+  if (L.low !== null && t < L.low) return 'lag';
+  return null;
+}
+
 function coldDeviations() {
   const dev = [];
   for (const row of COLD) {
     const t = cap(row[0], 'measure_temperature');
     if (t === null) continue;
-    const bad = row[2] === 'fridge' ? (t >= 7) : (t > -16);
-    if (bad) dev.push({ name: row[1], temp: sv(t) + ' °C' });
+    const level = coldLevel(row[2], t);
+    if (!level) continue;
+    dev.push({
+      // The "!" is what distinguishes critical from warning on the panel.
+      name: (level === 'krit' ? '!' : '') + row[1],
+      temp: sv(t) + ' °C',
+      level,
+    });
   }
+  // Critical first, so truncating the list keeps the ones that matter.
+  const rank = { krit: 0, varn: 1, lag: 2 };
+  dev.sort((a, b) => rank[a.level] - rank[b.level]);
   return dev;
 }
 const coldSummary = n => (n ? n + ' avvikelse' + (n > 1 ? 'r' : '') : 'Alla OK');
