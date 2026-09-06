@@ -200,6 +200,47 @@ Four bugs were found in the old Flows while reading them. None came across:
   phrase after the temperature.
 - **The freezers had no low bound at all** while the fridges did.
 
+### The thresholds live in Logic variables
+
+Six of them, one pair per category shared by every unit in it - not per device:
+
+| | `hög` (warning) | `kritisk` | `låg` |
+|---|---|---|---|
+| `Kyl larm ...` | 10 | 12 | 1 |
+| `Frys larm ...` | -12 | -6 | -31 |
+
+Both the alarm script and the display script read these, so tuning one in the app
+moves the board and the notification together and they cannot drift apart. The
+literals in the code are only a fallback for a renamed or deleted variable.
+
+### The five minute delay
+
+A temperature has to stay outside its limit for five minutes before anything is
+sent, so that opening a door does not wake anyone. It applies to **every**
+threshold - warning and critical, high and low - because the reasoning is the
+same for all of them: a brief excursion is not a fault. That is an
+interpretation, not something that was asked for explicitly.
+
+Three things make it hold up:
+
+- **Fluctuation does not restart the clock.** `since` is the moment a unit
+  entered the band and is carried over untouched while it stays there, including
+  when it moves between warning and critical.
+- **Nor does a brief dip back inside.** A unit that drops back within limits is
+  not forgotten immediately; the entry is kept, marked with when it left, and
+  discarded only once it has stayed inside for a full five minutes. Without this,
+  a unit oscillating around its threshold - which is exactly what a compressor
+  cycle does - would never accumulate five continuous minutes and would never
+  alarm however bad it got.
+- **A unit that goes out of bounds and then stops reporting still alarms.** The
+  periodic trigger re-evaluates every unit from its last known value regardless
+  of whether anything reported, which is why that trigger is once a minute rather
+  than once every five: at five, the worst case alarm latency would be ten.
+
+The delay also gates the breakthrough rule below. A newly out-of-bounds unit has
+to wait out its own five minutes before it can interrupt the pause - otherwise
+the delay would do nothing whenever something else was already alarming.
+
 ### The pause
 
 Global, not per device: one alarm at a time however many units are out of
@@ -230,7 +271,12 @@ return value - only the global store is shared between them.
 
 The display used to use its own, tighter numbers - fridge >= 7, freezer > -16 -
 which meant the panel called things deviations that never produced an alarm. It
-now uses the alarm's numbers exactly. Two levels: the warning level is what makes
+now reads the same six Logic variables.
+
+Note that the board has no delay: it shows a unit as deviating as soon as it is
+outside the limits, while the alarm waits five minutes. That is deliberate - a
+board is glanced at, not pushed at someone - but it does mean the panel can show
+a deviation that never becomes a notification. Two levels: the warning level is what makes
 a row red and counts towards the deviation total, and the critical level marks
 the name with `!` and sorts it to the top, so that when the list is truncated the
 worst survive. The summary line is left as a plain count deliberately - on
@@ -240,20 +286,29 @@ t0_14b_tf, so the `!` carries the severity in the space that exists.
 The LED follows automatically: it reads what the board published, not the
 sensors.
 
-### The freezer low alarm is not built
+### Why the freezer low alarm is -31 and not -25
 
--25 was proposed. Measurement says it sits **inside normal operation**:
+-25 was proposed first. Measurement said it sits **inside normal operation**:
+Frys halv runs below it for 55-64% of the time and reaches -28.8, and Frys
+stående dips to -26.4 on every compressor cycle - 31 separate excursions in 24
+hours. It would have alarmed permanently.
 
-| | below -25 | coldest seen | note |
-|---|---|---|---|
-| Frys halv | 55-64% of the time | -28.8 | runs colder than the rest |
-| Frys stående | 17% of the time, 31 excursions/24h | -26.4 | every compressor cycle |
-| Frys liggande | never | -23.3 | |
-| Frys (källare) | never | -24.4 | sensor frozen, see below |
+-31 gives zero hits for all four, at both 6 and 24 hour resolution:
 
-So `LIMITS.freezer.low` is `null` and the check is skipped. The fridge low alarm
-at 1 degree is in and is safe - the coldest fridge reading in 24 hours was Ölkyl
-at 2.6.
+| | coldest in 24 h | margin to -31 | below -25 | below -31 |
+|---|---|---|---|---|
+| Frys halv | -28.8 | 2.2 | 55-64% of the time | never |
+| Frys stående | -26.2 | 4.8 | 17%, 31 excursions | never |
+| Frys (källare) | -24.4 | 6.6 | never | never |
+| Frys liggande | -23.3 | 7.7 | never | never |
+
+The cost of one shared number rather than one per unit: for Frys liggande, which
+floors at -23.3, **-31 sits nearly eight degrees below normal and will in
+practice never fire**. That unit has no meaningful low protection. It is a
+deliberate trade for having one number per category.
+
+The fridge low alarm at 1 degree is safe by a wider margin - the coldest fridge
+reading in 24 hours was Ölkyl at 2.6.
 
 ### Two things this surfaced
 

@@ -154,14 +154,26 @@ function appliance(id) {
 // The summary text is deliberately left as a plain count: on Display 14 the
 // summary column is 143 px, and "2 avvikelser, 1 kritisk" needs 168 px in
 // t0_14b_tf. The "!" carries the severity instead, in the space that exists.
+// Read from the same six Logic variables the alarm Flow uses, so tuning one in
+// the app moves the board and the notification together and they cannot drift
+// apart. The literals are only a fallback for a renamed or deleted variable.
 const COLD_LIMITS = {
   fridge: { warn: 10, crit: 12, low: 1 },
-  // The freezer low alarm is not settled: -25 turned out to sit inside normal
-  // operation (Frys halv runs below it half the time, Frys stående dips to
-  // -26.4 on every compressor cycle), so it is left off until a value is
-  // agreed. null means no low check.
-  freezer: { warn: -12, crit: -6, low: null },
+  freezer: { warn: -12, crit: -6, low: -31 },
 };
+const COLD_VARS = {
+  fridge: { warn: 'Kyl larm hög', crit: 'Kyl larm kritisk', low: 'Kyl larm låg' },
+  freezer: { warn: 'Frys larm hög', crit: 'Frys larm kritisk', low: 'Frys larm låg' },
+};
+try {
+  const byName = new Map(Object.values(await Homey.logic.getVariables()).map(v => [v.name, v]));
+  for (const kind of Object.keys(COLD_VARS)) {
+    for (const key of Object.keys(COLD_VARS[kind])) {
+      const v = byName.get(COLD_VARS[kind][key]);
+      if (v && typeof v.value === 'number') COLD_LIMITS[kind][key] = v.value;
+    }
+  }
+} catch (err) { /* keep the fallbacks rather than fail the whole board */ }
 
 const COLD = [
   ['3753a84f-08e3-4bc3-a425-cfce430f2a8f', 'Kylskåp',       'fridge'],
