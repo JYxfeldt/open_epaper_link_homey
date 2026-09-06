@@ -324,6 +324,100 @@ well past the critical threshold, in the middle of an otherwise clean 45-minute
 compressor cycle between -26 and -17. Most likely a door left open. Worth knowing
 that it happens.
 
+## The Shelly app migration
+
+Shelly moved to a new Homey app and five devices were re-added under it. This is
+not about the fridges and freezers, though it looked as if it might be.
+
+### Which five, and how the pairing was proved
+
+They are PM Mini G3 **energy meters**, not temperature sensors. The five Pill
+sensors that the cold-storage system reads were already on the new app.
+
+| MAC | Original (`cloud.shelly:shelly`) | New (`cloud.shelly.control:shellypmminig3_local`) |
+|---|---|---|
+| `54320453dd30` | Entre värmepump energi | 192.168.111.31 |
+| `dcda0cb619d8` | Tvättmaskin energi | 192.168.110.64 |
+| `dcda0ce98fe8` | Badrum golvvärme energi | 192.168.111.135 |
+| `5432045af374` | Torktumlare energi | 192.168.110.69 |
+| `54320452de50` | Gillestuga värmepump energi | 192.168.111.157 |
+
+Paired on hardware, not on names, and on three independent things:
+
+- **MAC.** The old driver stores an mDNS host in `data.id`
+  (`ShellyPMMiniG3-DCDA0CB619D8.local`); the new one stores
+  `settings._shelly_device_id` (`shellypmminig3-dcda0cb619d8`). Same hex.
+- **IP.** Old `settings.address` against new `settings._shelly_ip`.
+- **Live reading.** Both report the same meter value to three decimals, e.g.
+  3060.36 against 3060.356 kWh. They are reading the same physical meter.
+
+Seven other Shelly devices have no new counterpart and were left alone.
+
+### The cold storage system is not involved
+
+Checked explicitly rather than assumed: all ten device ids, old and new, were
+searched for in `Kyl och frys - larm`, `Status för Vibble`, `Robotstatus Display
+08`, `Dörrstatus Display 07` and `Uppdatera displayer`. **Zero matches in all
+five.** The overlap between the seven cold-storage devices and the migration is
+nil.
+
+Worth planning for separately: `Kylskåp temperatur` and `Frys temperatur` - two
+of the seven - are BLE sensors still on the **old** app
+(`cloud.shelly:shelly_bluetooth`). Uninstalling the old app would take them with
+it, and the cold-storage alarm would lose two units.
+
+### What depends on the old five
+
+| | Count | Field |
+|---|---|---|
+| Power by the Hour "Totalpris" | 5 | `settings.homey_device_id` |
+| Power Profiler | 3 | `settings.monitoredDeviceId` |
+| Flow "Starta om Bosch-Siemens app" | 2 cards | trigger id |
+
+No HomeyScript, no Logic variables, no name-based lookups, and nothing in this
+repo. The trigger card `measure_power_threshold_above_duration` exists on the new
+devices with identical arguments, so it swaps one for one.
+
+### The risk: the new driver has no plain `meter_power`
+
+It exposes `meter_power.total`, `.imported` and `.exported` instead. All five
+Power by the Hour devices run with `use_measure_source: false`, meaning they read
+the **cumulative meter**, and they carry years of cost history - Gillestuga alone
+holds 7306.5 kWh as its year start and 5697 kr for the year.
+
+Of the 27 Power by the Hour devices on this Homey, **26 source from a device that
+has a plain `meter_power`**. There is no existing example proving the app can
+read `meter_power.total`, which is why this is being done one device at a time.
+
+### Badrum golvvärme: migrated, not yet confirmed
+
+Done on 2026-09-06: Power by the Hour and the Power Profiler repointed, the new
+device moved to Badrum and given the original's name, the original renamed
+`Badrum golvvärme energi Legacy`. Nothing deleted.
+
+Verified immediately: no other flow changed, no other device renamed or moved,
+all four devices `available` with no warning, and **none of Power by the Hour's
+accumulated counters moved** - meter starts and money totals identical before and
+after, including across a deliberate restart of the app.
+
+One reference to the old id remains, in the Power by the Hour device's own
+`data.id` (`PH_power_f332f1a1-..._f9c96f`). That is its immutable identity from
+when it was created, not a live lookup - `settings.homey_device_id` is what it
+reads - and changing it would mean re-pairing and losing the history.
+
+**What is not confirmed is whether Power by the Hour actually counts from the new
+source**, and that is a flaw in the choice of test device: Badrum was picked for
+having the least valuable history, without checking whether it produces
+observable data. It draws 0 W, its meter last moved on 2026-09-03 22:00, and
+Power by the Hour only writes `meter_latest` when the source meter changes -
+restarting the app did not make it re-read. So the test subject cannot answer the
+question until the bathroom floor next draws power.
+
+The signal to watch is `meter_latest` on `Badrum golvvärme totalpris` changing
+from `809.49` to a three-decimal value like `809.487`, or `kWh denna dag` leaving
+zero. A device with a standing draw - Torktumlare at 1.6 W moves the fourth
+decimal within the hour - would have answered the same question in an afternoon.
+
 ## Reading the AP
 
 We have gone looking for this twice and got it wrong both times, so it is written
