@@ -460,6 +460,58 @@ The lesson worth keeping: **do not write `meter_latest`.** If a migration needs
 the meter re-baselined, the app has no flow card for it and the settings are not
 the source of truth at runtime.
 
+### The floor-heating test, and why it could not run either
+
+The next idea was elegant: raise the bathroom floor setpoint so the floor draws
+power, the meter climbs past 809.49 on its own, and the rounding block clears
+naturally with nothing written. It would have answered the question and cleared
+the blocker in one move.
+
+It could not run, for a reason that has nothing to do with any of this: **the
+bathroom thermostat has been offline since 2026-09-03.** `alarm_connectivity` has
+been true since 15:44 that day, `measure_temperature` and `heating` are frozen at
+the same afternoon, and the old meter's last movement was 22:00 the same evening.
+The setpoint write reached Homey - `target_temperature` went to 22 - but not the
+thermostat, so the floor never drew a watt.
+
+Cost of the test: **no energy at all, and about five minutes.** The setpoint is
+back at 18 and the migration is rolled back, with Power by the Hour's counters
+untouched: 0 / 0.22 / 262.45 kWh and 0 / 0.43 / 509.91 kr, exactly as before.
+
+`Badrum golvvärme` (the nVent Raychem Senz thermostat, not the meter) should be
+looked at - it is the third device found this week reporting `available: true`
+while silently not working, after the Easee charger and `Frys temperatur`.
+
+### Källartrappa inne lampa: migrated, and a card field I had been missing
+
+The one device with no meter risk at all. The Dimmer G4 driver keeps a plain
+`meter_power`, and nothing depends on it except two action cards in "Tänd
+innetrappa vid rörelse" - no Power by the Hour. Migrated cleanly: cards
+repointed, moved to Källartrappa inne, named after the original, original
+suffixed Legacy. No references to the old device remain anywhere.
+
+It did surface a mistake in how I had been repointing flow cards. **A device card
+carries both `id` and `ownerUri`**, and I had only been rewriting `id`. That
+leaves a half-migrated card: it calls the new device but still claims to belong
+to the old one. Fixed here, and a sweep of every flow found five more - all in
+the seven retired cold-storage flows, all disabled.
+
+Those five are worth noting because they explain an earlier finding. `Kyl -
+Garage - Halv kyl` and `Kyl - Garage - Ölkyl` have `ownerUri` pointing at
+Kylskåp, and three of the freezer flows point at Frys. That is exactly why those
+flows embedded the wrong device's temperature in their alarm text: the card
+believed it belonged to a different device than the one it triggered on. Not
+worth repairing in flows that are disabled and replaced, but it is the mechanism
+behind the bug.
+
+### Where this leaves the question
+
+Still unanswered, but only one device can answer it and nothing needs to be
+written to do so: **Gillestuga värmepump**. Its new reading is already 0.051 kWh
+above what Power by the Hour has stored, so there is no rounding block, and it
+draws 17 W so the meter climbs continuously. Migrating it would settle the
+question within minutes.
+
 ## Reading the AP
 
 We have gone looking for this twice and got it wrong both times, so it is written
