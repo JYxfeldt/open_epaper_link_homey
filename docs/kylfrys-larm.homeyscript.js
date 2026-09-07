@@ -13,7 +13,9 @@ const COLD = [
   ['3753a84f-08e3-4bc3-a425-cfce430f2a8f', 'Kylskåp',       'fridge'],
   ['c0087978-e847-45ba-a6d9-b9f6923ff986', 'Kyl halv',      'fridge'],
   ['1a422bee-b496-416a-890e-29d47c4be9cf', 'Ölkyl',         'fridge'],
-  ['df4dcf2d-d142-4d58-9f94-d171547328f6', 'Frys',          'freezer'],
+  // Re-added under the Shelly Control app on 2026-09-06; same physical sensor,
+  // same MAC 7C:C6:B6:74:D4:6D, new device id. The old one is the Legacy entry.
+  ['fdf3a2bd-8c82-4a00-ba60-8b1752f16b4d', 'Frys',          'freezer'],
   ['0e28a3d8-c82c-4385-9fc3-3ed0626f79ab', 'Frys halv',     'freezer'],
   ['592b5b19-eaba-4399-b415-1dd3242f6d7e', 'Frys stående',  'freezer'],
   ['b8612fd5-1ab1-4704-8b89-d26c1e44162a', 'Frys liggande', 'freezer'],

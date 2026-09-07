@@ -405,7 +405,52 @@ reading in 24 hours was Ölkyl at 2.6.
 
 **`Frys temperatur` has been frozen on -24.4 for 15 days** while reporting
 `available: true`, exactly like the Easee charger. The cellar freezer has had no
-working alarm for two weeks. The script reports a sensor that has not changed in
+working alarm for two weeks.
+
+**Resolved on 2026-09-06 by re-adding the sensor under the Shelly Control app.**
+It is the *same physical sensor* - `data.id` is `7C:C6:B6:74:D4:6D` on both the
+old and the new device - so this was a re-pair, not new hardware. The new device
+id is `fdf3a2bd-8c82-4a00-ba60-8b1752f16b4d` and everything now points at it:
+`Kyl och frys - larm`, all four template cards in `Status för Vibble`, the
+condition card that lists the cold devices, and the two threshold triggers. Only
+the four retired per-device freezer flows still name the old id, and they are
+disabled.
+
+The old entry survives as `Frys temperatur (Legacy)`, and its history tells the
+story: -24.4 unchanged every day from 23 August to 5 September, then -0.1 on the
+6th and 23.0 on the 7th as it was taken out of the freezer and handled.
+
+### Was it the BLE stack? No - and the check is worth keeping
+
+The sensor is Bluetooth, and so are the Intellivent fans, so a wedged BLE stack
+would be a tidy explanation covering both. **The data does not support it for
+this outage.**
+
+`Kylskåp temperatur` is the other Shelly BLU sensor, on the same app and the same
+radio. Through the whole fifteen days it reported **two to four value changes
+every single day** without a gap:
+
+| | 22 Aug | 25 Aug | 29 Aug | 1 Sep | 4 Sep | 6 Sep |
+|---|---|---|---|---|---|---|
+| Kylskåp | 4 | 4 | 3 | 3 | 4 | 2 |
+| Frys | 1 | 0 | 0 | 0 | 0 | 1 |
+
+If the stack had been down, Kylskåp would have gone silent with it. It did not,
+so the freezer sensor was silent on its own.
+
+The structural concern behind the question is still real, though. No Shelly
+device on this network has BLE forwarding enabled - `installBleForwardingScript`
+is false on all ten - so the BLU sensors are read by **Homey's own radio**, which
+is the same radio the Intellivent fans use. A genuine stack wedge would take out
+the cold-storage sensors and the fans together, and the alarm's stale-sensor
+warning is the thing that would surface it. Right now that radio is demonstrably
+alive: `Badrum fläkt` reported minutes ago. `Toalett fläkt` is `available: false`
+and is a separate open question.
+
+Note that "hours since last update" is not evidence of silence for these sensors,
+because Homey only moves `lastUpdated` when a value **changes** - a sensor sitting
+in a stable freezer can legitimately go hours without one. Counting changes per
+day, as above, is the honest measure. The script reports a sensor that has not changed in
 12 hours alongside any alarm it sends; setting `ALARM_ON_STALE` to true would
 make a dead sensor raise an alarm on its own, which is off by default because it
 would start nagging immediately.
