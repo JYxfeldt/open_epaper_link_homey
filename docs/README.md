@@ -300,9 +300,11 @@ Six of them, one pair per category shared by every unit in it - not per device:
 | `Kyl larm ...` | 10 | 12 | 1 |
 | `Frys larm ...` | -12 | -6 | -31 |
 
-Both the alarm script and the display script read these, so tuning one in the app
-moves the board and the notification together and they cannot drift apart. The
-literals in the code are only a fallback for a renamed or deleted variable.
+Three scripts read these - the alarm, the board and the change gate in front of
+Displays 11 and 14 - so tuning one in the app moves all of them together. The
+literals in the code are only a fallback for a renamed or deleted variable, and
+using one is logged. How that is kept true is in "Where the thresholds actually
+live" below; it did not hold the first time.
 
 ### The five minute delay
 
@@ -364,6 +366,10 @@ The display used to use its own, tighter numbers - fridge >= 7, freezer > -16 -
 which meant the panel called things deviations that never produced an alarm. It
 now reads the same six Logic variables.
 
+That fixed the board script and left a third copy standing, in the change gate.
+See "Where the thresholds actually live" below - it is the more useful section,
+because it is the one that says how a fix like this is stopped from rotting.
+
 Note that the board has no delay: it shows a unit as deviating as soon as it is
 outside the limits, while the alarm waits five minutes. That is deliberate - a
 board is glanced at, not pushed at someone - but it does mean the panel can show
@@ -376,6 +382,78 @@ t0_14b_tf, so the `!` carries the severity in the space that exists.
 
 The LED follows automatically: it reads what the board published, not the
 sensors.
+
+### Where the thresholds actually live
+
+"Both scripts read the variables" was true and still not enough. Moving the
+numbers into Logic variables in September fixed the two scripts that were looked
+at and missed a third copy, sitting in the condition card `e488517d` in
+`Status för Vibble` - the change gate that decides whether a board is worth
+repainting. It still carried `fridge >= 7` and `freezer > -16`.
+
+That was not untidiness. Display 11 has **no cron of its own**; the gate is its
+only recurring path. And the gate's signature carried the device *name* only:
+
+1. A fridge crosses 7. The name enters the signature, the gate fires, the board
+   repaints - with nothing on it, correctly, since 7 is below the warning limit
+   of 10.
+2. The same fridge climbs past 10 and becomes a real deviation. The signature is
+   unchanged, because the name was already in it. The gate returns false.
+3. Display 11 keeps showing "Alla OK" while the alarm fires on the phone.
+
+So the drift was not cosmetic - it was the exact failure the variables were meant
+to prevent, hiding one card further down.
+
+Three things now hold it together:
+
+- **One block, generated, not copied.** `docs/cold-limits.snippet.js` holds the
+  device list, the six variable names, the fallbacks and `coldLevel()`.
+  HomeyScript has no `import`, so it genuinely has to be pasted into each script -
+  but it is pasted by `node docs/cold-block.js expand`, never by hand, and
+  `node docs/cold-block.js check` exits non-zero if any copy differs or if a
+  threshold literal appears outside the block. Run check before committing.
+- **The signature carries the level.** `Kyl halv:krit` and `Kyl halv:varn` are
+  different strings, so an escalation repaints the board.
+- **The fallback is loud.** Every script logs
+  `VARNING kyl/frys-trosklar: fallback for N av 6 - <vilka>` when a variable is
+  missing or non-numeric. The old code swallowed that silently, which is how
+  three copies were able to disagree without anyone noticing.
+
+Verified sharply on 7 September rather than reasoned about. `Kyl larm hög` was
+moved 10 -> 5 and `Kyl larm kritisk` 12 -> 6 with Kyl halv sitting at 6.6:
+
+| | before | after |
+|---|---|---|
+| board (`vibble_drawn_sig`) | `""` | `"!Kyl halv"` |
+| gate signature | `cold:` | `cold:Kyl halv:krit` |
+| alarm state | `{}` | `{"Kyl halv":{"level":"krit"}}` |
+
+Then `Kyl larm kritisk` alone back to 12: the board dropped the `!`, the gate
+went `Kyl halv:krit -> Kyl halv:varn` (**true** - the case the old gate could not
+see), and the alarm followed to `varn` on its next minute. Running the gate again
+with nothing changed returned false, so the suppression still works. All six
+variables restored; no notification was sent, because the whole exercise ran
+inside the alarm's five minute delay - `eligible` stayed empty and `send` false
+throughout.
+
+The deployed cards were hashed against `docs/` before the test, so this exercised
+the code that is actually running, not a copy of it.
+
+#### The fourteen trigger cards cannot read variables, and do not need to
+
+`Status för Vibble` is also woken by fourteen device threshold triggers -
+`measure_temperature_threshold_above/below_duration`, one pair per unit, fixed at
+**8** for the fridges and **-16** for the freezers. These are Homey card
+arguments, not script, so they cannot read a Logic variable. They are left alone
+deliberately: their job is only to *wake* the flow, and every one of them fires
+strictly earlier than any of the six real limits, so the gate always gets a
+chance to look. The consequence to know about is the one crossing they miss -
+a fridge already past 8 that later crosses 10 does not re-trigger, so that
+repaint waits for the fifteen minute cron. The alarm is unaffected; it runs off
+its own once-a-minute trigger.
+
+If those numbers ever need to move with the variables, the honest fix is to
+delete the fourteen and let the cron carry it, not to hand-edit fourteen cards.
 
 ### Why the freezer low alarm is -31 and not -25
 

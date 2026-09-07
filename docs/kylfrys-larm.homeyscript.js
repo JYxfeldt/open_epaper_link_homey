@@ -9,49 +9,75 @@
 // of bounds, not just the one that happened to report. Both of those need a
 // single place that can see all seven at once.
 
-const COLD = [
-  ['3753a84f-08e3-4bc3-a425-cfce430f2a8f', 'Kylskåp',       'fridge'],
-  ['c0087978-e847-45ba-a6d9-b9f6923ff986', 'Kyl halv',      'fridge'],
-  ['1a422bee-b496-416a-890e-29d47c4be9cf', 'Ölkyl',         'fridge'],
-  // Re-added under the Shelly Control app on 2026-09-06; same physical sensor,
-  // same MAC 7C:C6:B6:74:D4:6D, new device id. The old one is the Legacy entry.
-  ['fdf3a2bd-8c82-4a00-ba60-8b1752f16b4d', 'Frys',          'freezer'],
-  ['0e28a3d8-c82c-4385-9fc3-3ed0626f79ab', 'Frys halv',     'freezer'],
-  ['592b5b19-eaba-4399-b415-1dd3242f6d7e', 'Frys stående',  'freezer'],
-  ['b8612fd5-1ab1-4704-8b89-d26c1e44162a', 'Frys liggande', 'freezer'],
-];
-
-// The six thresholds live in Logic variables so they can be tuned in the app
-// without editing code. One pair of numbers per category, shared by every unit
-// in it - not per device. The values here are only a fallback for the case where
-// a variable has been renamed or deleted.
+// The devices, the six thresholds and coldLevel() come from the shared block
+// below, byte-identical to the copies in the board script and the change gate,
+// so the notification and the panel cannot disagree about what counts as a
+// deviation. Nothing outside that block may carry a threshold of its own.
 //
-// "Frys larm låg" is -31 rather than the -25 first proposed, because -25 turned
-// out to sit inside normal operation: Frys halv runs below it for 55-64% of the
+// On why "Frys larm låg" is -31 rather than the -25 first proposed: -25 turned
+// out to sit inside normal operation. Frys halv runs below it for 55-64% of the
 // time and reaches -28.8, and Frys stående dips to -26.4 on every compressor
 // cycle. -31 gives zero hits for all four over both 6 and 24 hours. The cost of
 // one shared number is that for Frys liggande, which floors at -23.3, -31 sits
 // nearly 8 degrees below normal and will in practice never fire.
-const FALLBACK = {
+// ==== BEGIN cold-limits (delad kod - se docs/cold-limits.snippet.js) ====
+// The seven units, in one place. It used to be three copies, which is why
+// repointing the freezer sensor in September had to touch three scripts.
+const COLD = [
+  ['3753a84f-08e3-4bc3-a425-cfce430f2a8f', 'Kylskåp', 'fridge'],
+  ['c0087978-e847-45ba-a6d9-b9f6923ff986', 'Kyl halv', 'fridge'],
+  ['1a422bee-b496-416a-890e-29d47c4be9cf', 'Ölkyl', 'fridge'],
+  // Re-added under the Shelly Control app on 2026-09-06; same physical sensor,
+  // same MAC 7C:C6:B6:74:D4:6D, new device id. The old one is the Legacy entry.
+  ['fdf3a2bd-8c82-4a00-ba60-8b1752f16b4d', 'Frys', 'freezer'],
+  ['0e28a3d8-c82c-4385-9fc3-3ed0626f79ab', 'Frys halv', 'freezer'],
+  ['592b5b19-eaba-4399-b415-1dd3242f6d7e', 'Frys stående', 'freezer'],
+  ['b8612fd5-1ab1-4704-8b89-d26c1e44162a', 'Frys liggande', 'freezer'],
+];
+
+// The six limits live in Logic variables so the board, the alarm and the change
+// gate move together and cannot drift apart. The numbers here are a fallback for
+// a renamed or deleted variable and nothing else. Using one is logged loudly:
+// a silent fallback is how the copies drifted apart in the first place.
+const COLD_FALLBACK = {
   fridge: { warn: 10, crit: 12, low: 1 },
   freezer: { warn: -12, crit: -6, low: -31 },
 };
-const VAR_NAMES = {
+const COLD_VARS = {
   fridge: { warn: 'Kyl larm hög', crit: 'Kyl larm kritisk', low: 'Kyl larm låg' },
   freezer: { warn: 'Frys larm hög', crit: 'Frys larm kritisk', low: 'Frys larm låg' },
 };
-
-const LIMITS = JSON.parse(JSON.stringify(FALLBACK));
+const COLD_LIMITS = JSON.parse(JSON.stringify(COLD_FALLBACK));
+const COLD_FALLBACK_USED = [];
 try {
-  const vars = Object.values(await Homey.logic.getVariables());
-  const byName = new Map(vars.map((v) => [v.name, v]));
-  for (const kind of Object.keys(VAR_NAMES)) {
-    for (const key of Object.keys(VAR_NAMES[kind])) {
-      const v = byName.get(VAR_NAMES[kind][key]);
-      if (v && typeof v.value === 'number') LIMITS[kind][key] = v.value;
+  const byName = new Map(Object.values(await Homey.logic.getVariables()).map((v) => [v.name, v]));
+  for (const kind of Object.keys(COLD_VARS)) {
+    for (const key of Object.keys(COLD_VARS[kind])) {
+      const varName = COLD_VARS[kind][key];
+      const v = byName.get(varName);
+      if (v && typeof v.value === 'number') COLD_LIMITS[kind][key] = v.value;
+      else COLD_FALLBACK_USED.push(`${varName} ${v ? `= ${JSON.stringify(v.value)} (inte ett tal)` : 'saknas'}, anvander ${COLD_FALLBACK[kind][key]}`);
     }
   }
-} catch (err) { /* fall back to the numbers above rather than stop alarming */ }
+} catch (err) {
+  COLD_FALLBACK_USED.push(`kunde inte lasa Logic-variablerna (${err.message}), anvander alla sex inbyggda varden`);
+}
+if (COLD_FALLBACK_USED.length) {
+  console.log(`VARNING kyl/frys-trosklar: fallback for ${COLD_FALLBACK_USED.length} av 6 - ${COLD_FALLBACK_USED.join('; ')}`);
+}
+
+// The one place a temperature is turned into a level. `slack` widens the band
+// while a unit is already alarming - the alarm passes its hysteresis here, the
+// board and the gate pass nothing.
+function coldLevel(kind, t, slack) {
+  const L = COLD_LIMITS[kind];
+  const d = slack || 0;
+  if (t > L.crit - d) return 'krit';
+  if (t > L.warn - d) return 'varn';
+  if (L.low !== null && t < L.low + d) return 'lag';
+  return null;
+}
+// ==== END cold-limits ====
 
 // A temperature has to stay outside the limit for this long before it alarms, so
 // that opening a door does not wake anyone. It applies to every threshold -
@@ -91,15 +117,11 @@ const say = (t) => `${t < 0 ? 'minus ' : ''}${String(Math.round(Math.abs(t) * 10
 
 const RANK = { krit: 0, lag: 1, varn: 2, stale: 3 };
 
-function levelOf(kind, t, wasActive) {
-  const L = LIMITS[kind];
-  // Widen the band by HYST while already in alarm - that is the hysteresis.
-  const d = wasActive ? HYST : 0;
-  if (t > L.crit - d) return 'krit';
-  if (t > L.warn - d) return 'varn';
-  if (L.low !== null && t < L.low + d) return 'lag';
-  return null;
-}
+// The alarm is the only one of the three that widens the band: while a unit is
+// already alarming it has to come back a full degree past the limit before it
+// counts as recovered. The board and the gate pass no slack, so they draw
+// exactly what the thresholds say.
+const levelOf = (kind, t, wasActive) => coldLevel(kind, t, wasActive ? HYST : 0);
 
 // ---- read previous state -------------------------------------------------
 let prev = { active: {}, eligible: {}, count: 0, last: 0 };
